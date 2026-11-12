@@ -1,0 +1,43 @@
+import { formatDistanceStrict } from 'date-fns'
+import { ptBR } from 'date-fns/locale'
+import { formatInTimeZone } from 'date-fns-tz'
+
+export const TIMEZONE = 'America/Sao_Paulo'
+
+type DateInput = Date | string | number
+
+const toDate = (d: DateInput) => (d instanceof Date ? d : new Date(d))
+
+/** 05/03/2026 */
+export function formatDate(d: DateInput): string {
+  return formatInTimeZone(toDate(d), TIMEZONE, 'dd/MM/yyyy')
+}
+
+/** 05/03/2026 14:30 */
+export function formatDateTime(d: DateInput): string {
+  return formatInTimeZone(toDate(d), TIMEZONE, 'dd/MM/yyyy HH:mm')
+}
+
+/** 14:30 */
+export function formatTime(d: DateInput): string {
+  return formatInTimeZone(toDate(d), TIMEZONE, 'HH:mm')
+}
+
+/** Data de nascimento (sem fuso: "2020-03-14" → 14/03/2020). */
+export function formatDateOnly(isoDate: string): string {
+  const [y, m, d] = isoDate.slice(0, 10).split('-')
+  return `${d}/${m}/${y}`
+}
+
+/** "há 22 horas" */
+export function timeAgo(d: DateInput, now: Date = new Date()): string {
+  return `há ${formatDistanceStrict(toDate(d), now, { locale: ptBR })}`
+}
+
+/** Saudação conforme o horário de São Paulo. */
+export function greeting(now: Date = new Date()): string {
+  const hour = Number(formatInTimeZone(now, TIMEZONE, 'H'))
+  if (hour < 12) return 'Bom dia'
+  if (hour < 18) return 'Boa tarde'
+  return 'Boa noite'
+}

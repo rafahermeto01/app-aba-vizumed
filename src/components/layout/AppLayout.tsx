@@ -1,0 +1,129 @@
+import { LogOut } from 'lucide-react'
+import { NavLink, Outlet } from 'react-router'
+
+import { Logo } from '@/components/brand/Logo'
+import { Avatar, AvatarFallback } from '@/components/ui/avatar'
+import { Button } from '@/components/ui/button'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
+import { ROLE_LABEL, useAuth } from '@/features/auth/AuthProvider'
+import { avatarInitials } from '@/lib/initials'
+import { cn } from '@/lib/utils'
+
+import { navFor } from './nav'
+
+function UserMenu({ compact = false }: { compact?: boolean }) {
+  const { profile, signOut } = useAuth()
+  if (!profile) return null
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button variant="ghost" className={cn('h-auto gap-3 px-2 py-2', compact ? '' : 'w-full justify-start')} aria-label="Menu da conta">
+          <Avatar className="size-9">
+            <AvatarFallback className="bg-secondary text-secondary-foreground">{avatarInitials(profile.full_name)}</AvatarFallback>
+          </Avatar>
+          {!compact && (
+            <span className="flex min-w-0 flex-col items-start text-left">
+              <span className="truncate text-sm font-medium">{profile.full_name}</span>
+              <span className="text-xs text-muted-foreground">{ROLE_LABEL[profile.role]}</span>
+            </span>
+          )}
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end" className="w-56">
+        <DropdownMenuLabel className="flex flex-col">
+          <span>{profile.full_name}</span>
+          <span className="text-xs font-normal text-muted-foreground">{profile.email}</span>
+        </DropdownMenuLabel>
+        <DropdownMenuSeparator />
+        <DropdownMenuItem onSelect={() => void signOut()} className="text-base md:text-sm">
+          <LogOut aria-hidden /> Sair
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  )
+}
+
+/**
+ * Layout base: menu lateral no computador, barra inferior no celular.
+ */
+export function AppLayout() {
+  const { profile } = useAuth()
+  const items = profile ? navFor(profile.role) : []
+
+  return (
+    <div className="min-h-dvh md:flex">
+      {/* Menu lateral (computador) */}
+      <aside className="sticky top-0 hidden h-dvh w-64 shrink-0 flex-col border-r border-sidebar-border bg-sidebar md:flex">
+        <div className="px-5 py-6">
+          <Logo />
+        </div>
+        <nav aria-label="Menu principal" className="flex flex-1 flex-col gap-1 px-3">
+          {items.map(({ to, label, icon: Icon }) => (
+            <NavLink
+              key={to}
+              to={to}
+              end={to === '/'}
+              className={({ isActive }) =>
+                cn(
+                  'flex items-center gap-3 rounded-lg px-3 py-2.5 text-[15px] font-medium text-sidebar-foreground/80 transition-colors hover:bg-sidebar-accent hover:text-sidebar-accent-foreground',
+                  isActive && 'bg-sidebar-accent text-sidebar-accent-foreground',
+                )
+              }
+            >
+              <Icon className="size-5" aria-hidden />
+              {label}
+            </NavLink>
+          ))}
+        </nav>
+        <div className="border-t border-sidebar-border p-3">
+          <UserMenu />
+        </div>
+      </aside>
+
+      <div className="flex min-w-0 flex-1 flex-col">
+        {/* Topo (celular) */}
+        <header className="sticky top-0 z-20 flex items-center justify-between border-b bg-card/95 px-4 py-2 backdrop-blur md:hidden">
+          <Logo />
+          <UserMenu compact />
+        </header>
+
+        <main className="mx-auto w-full max-w-6xl flex-1 px-4 pt-6 pb-28 md:px-8 md:pt-10 md:pb-10">
+          <Outlet />
+        </main>
+      </div>
+
+      {/* Barra inferior (celular) */}
+      <nav
+        aria-label="Menu principal"
+        className="fixed inset-x-0 bottom-0 z-20 border-t bg-card/95 pb-[env(safe-area-inset-bottom)] backdrop-blur md:hidden"
+      >
+        <ul className="grid" style={{ gridTemplateColumns: `repeat(${items.length}, minmax(0, 1fr))` }}>
+          {items.map(({ to, label, icon: Icon }) => (
+            <li key={to}>
+              <NavLink
+                to={to}
+                end={to === '/'}
+                className={({ isActive }) =>
+                  cn(
+                    'flex min-h-16 flex-col items-center justify-center gap-1 text-xs font-medium text-muted-foreground',
+                    isActive && 'text-primary',
+                  )
+                }
+              >
+                <Icon className="size-6" aria-hidden />
+                {label}
+              </NavLink>
+            </li>
+          ))}
+        </ul>
+      </nav>
+    </div>
+  )
+}
