@@ -7,6 +7,7 @@ import { avatarInitials, makeInitials } from '@/lib/initials'
 describe('iniciais', () => {
   it('ignora conectivos', () => expect(makeInitials('Ana Beatriz de Souza')).toBe('ABS'))
   it('aceita espaços extras', () => expect(makeInitials('  pedro   exemplo silva ')).toBe('PES'))
+  it('ignora parênteses e pontuação', () => expect(makeInitials('Carla Coordenadora (demo)')).toBe('CCD'))
   it('avatar usa no máximo 2 letras', () => expect(avatarInitials('Ana Beatriz de Souza')).toBe('AS'))
 })
 

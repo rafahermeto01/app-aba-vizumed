@@ -26,7 +26,13 @@ if (login.error) fail(`Não consegui entrar como a AT demo: ${login.error.messag
 const { data: learners, error } = await sb.from('learners').select('id, full_name')
 if (error) fail(error.message)
 const names = (learners ?? []).map((l) => l.full_name).sort()
-ok(names.length === 2 && names.includes('Pedro Exemplo Silva') && names.includes('Laura Exemplo Costa'), `vê apenas os 2 aprendizes vinculados (${names.join(', ')})`)
+// Vê os vinculados a ela no seed (Pedro e Laura) e NENHUM dos que são só do Bruno (Davi e Alice).
+// (Pode ver outros se a coordenação a vinculou a novos aprendizes.)
+const notMine = ['Davi Exemplo Souza', 'Alice Exemplo Lima']
+ok(
+  names.includes('Pedro Exemplo Silva') && names.includes('Laura Exemplo Costa') && !names.some((n) => notMine.includes(n)),
+  `vê os aprendizes vinculados e nenhum dos outros (${names.join(', ')})`,
+)
 
 // Busca direta por um aprendiz NÃO vinculado (Davi) usando a chave de servidor só para descobrir o id.
 const admin = adminClient()

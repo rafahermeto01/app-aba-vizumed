@@ -181,5 +181,58 @@ ok((await q(`select id from learners`)).length === 0, 'usuário desativado não 
 await as(U.coord)
 ok((await q(`select count(*)::int n from cid_codes`))[0].n >= 30, 'CIDs de referência disponíveis')
 
+// --- Fase 2: cadastro de aprendizes (save_learner) ------------------------------
+console.log('\nCadastro de aprendizes:')
+const cids = (await q(`select id from cid_codes where code in ('F84.0', 'F90.0') order by code`)).map(r => r.id)
+const novoAprendiz = {
+  full_name: 'Maria Exemplo dos Santos',
+  cpf: '111.444.777-35',
+  birth_date: '2020-03-14',
+  cid_ids: cids,
+  team_ids: [U.sup, U.at2, U.at1], // at1 está desativado: não pode entrar
+  guardians: [
+    { name: 'Joana Exemplo', relationship: 'Mãe', phone: '(11) 98888-0000' },
+    { name: 'Carlos Exemplo', relationship: 'Pai' },
+  ],
+  consent_accepted: true,
+}
+await expectError(() => q(`select save_learner($1::jsonb)`, [JSON.stringify({ ...novoAprendiz, consent_accepted: false })]), 'não cadastra sem o consentimento LGPD')
+const [{ save_learner: lm }] = await q(`select save_learner($1::jsonb)`, [JSON.stringify(novoAprendiz)])
+const [lmRow] = await q(`select initials, cpf from learners where id = $1`, [lm])
+ok(lmRow.initials === 'MES' && lmRow.cpf === '11144477735', 'cria o aprendiz com iniciais automáticas e CPF só com dígitos')
+ok((await q(`select 1 from learner_cids where learner_id = $1 and deleted_at is null`, [lm])).length === 2, 'grava os 2 CIDs')
+ok((await q(`select 1 from guardians where learner_id = $1 and deleted_at is null`, [lm])).length === 2, 'grava os 2 responsáveis')
+const team = await q(`select profile_id from learner_team where learner_id = $1 and deleted_at is null`, [lm])
+ok(team.length === 2 && !team.some(t => t.profile_id === U.at1), 'vincula a equipe, sem o membro desativado')
+const cons = await q(`select consent_text, registered_by from consents where learner_id = $1`, [lm])
+ok(cons.length === 1 && cons[0].consent_text.startsWith('Declaro que obtive') && cons[0].registered_by === U.coord, 'registra o consentimento com o texto exato e quem registrou')
+await expectError(() => q(`select save_learner($1::jsonb)`, [JSON.stringify({ ...novoAprendiz, full_name: 'Outra Exemplo' })]), 'não aceita CPF repetido na clínica')
+
+await as(U.at2)
+ok((await q(`select id from learner_overview where id = $1`, [lm])).length === 1, 'AT vinculada passa a ver o novo aprendiz')
+await expectError(() => q(`select save_learner($1::jsonb)`, [JSON.stringify({ ...novoAprendiz, cpf: null })]), 'AT não cadastra aprendiz')
+
+await as(U.coord)
+const gs = await q(`select id, name from guardians where learner_id = $1 and deleted_at is null order by name`, [lm])
+const joana = gs.find(g => g.name === 'Joana Exemplo')
+await q(`select save_learner($1::jsonb)`, [JSON.stringify({
+  ...novoAprendiz, id: lm, initials: 'MARI', team_ids: [U.sup], cid_ids: [cids[0]],
+  guardians: [{ id: joana.id, name: 'Joana Exemplo', relationship: 'Mãe', phone: '(11) 97777-0000' }],
+  consent_accepted: false, // já existe: não precisa de novo
+})])
+ok((await q(`select initials from learners where id = $1`, [lm]))[0].initials === 'MARI', 'edita as iniciais')
+ok((await q(`select 1 from learner_cids where learner_id = $1 and deleted_at is null`, [lm])).length === 1, 'remove o CID desmarcado (exclusão lógica)')
+const gNow = await q(`select name, phone from guardians where learner_id = $1 and deleted_at is null`, [lm])
+ok(gNow.length === 1 && gNow[0].phone === '(11) 97777-0000', 'atualiza um responsável e remove o outro')
+ok((await q(`select count(*)::int n from consents where learner_id = $1`, [lm]))[0].n === 1, 'editar não cria novo consentimento')
+await as(U.at2)
+ok((await q(`select id from learner_overview where id = $1`, [lm])).length === 0, 'AT desvinculada deixa de ver o aprendiz na hora')
+
+await as(U.coord)
+const ov = await q(`select full_name, last_session_at, sessions_count from learner_overview where id = $1`, [l1.id])
+ok(ov.length === 1 && ov[0].last_session_at !== null && ov[0].sessions_count > 0, 'lista mostra a última sessão do aprendiz')
+
+ok((await q(`select make_initials('Maria (Mari) de Souza') as i`))[0].i === 'MMS', 'iniciais ignoram parênteses e conectivos')
+
 console.log(`\n${pass} ok, ${fail} falhas`)
 process.exit(fail ? 1 : 0)

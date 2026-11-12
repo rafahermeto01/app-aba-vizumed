@@ -41,3 +41,24 @@ export function greeting(now: Date = new Date()): string {
   if (hour < 18) return 'Boa tarde'
   return 'Boa noite'
 }
+
+/** Hoje em São Paulo, no formato do campo de data ("2026-11-13"). */
+export function todayIso(now: Date = new Date()): string {
+  return formatInTimeZone(now, TIMEZONE, 'yyyy-MM-dd')
+}
+
+/** Idade a partir da data de nascimento: "5 anos", "1 ano e 4 meses", "8 meses". */
+export function ageLabel(isoBirth: string, now: Date = new Date()): string {
+  const [by, bm, bd] = isoBirth.slice(0, 10).split('-').map(Number)
+  const [ny, nm, nd] = todayIso(now).split('-').map(Number)
+  let months = (ny - by) * 12 + (nm - bm)
+  if (nd < bd) months -= 1
+  if (months < 0) return ''
+  const years = Math.floor(months / 12)
+  const rest = months % 12
+  const y = years === 1 ? '1 ano' : `${years} anos`
+  const m = rest === 1 ? '1 mês' : `${rest} meses`
+  if (years === 0) return m
+  if (years < 3 && rest > 0) return `${y} e ${m}`
+  return y
+}

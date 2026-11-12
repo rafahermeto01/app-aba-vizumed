@@ -260,7 +260,7 @@ Quatro pastas **privadas**: `clinic-logos`, `profile-photos`, `learner-photos`, 
 2. Não consegue alterar uma sessão finalizada.
 3. Não consegue criar programa nem aprendiz, nem se promover.
 
-`tests/db/rls-local.test.mjs` (`npm run test:db`) roda todas as migrations num Postgres temporário e verifica 42 regras, incluindo: usuário desativado não lê nada, senha provisória bloqueia tudo, reenvio não duplica, desfazer não conta, auditoria de correções e sugestão de maestria.
+`tests/db/rls-local.test.mjs` (`npm run test:db`) roda todas as migrations num Postgres temporário e verifica 58 regras, incluindo: usuário desativado não lê nada, senha provisória bloqueia tudo, reenvio não duplica, desfazer não conta, auditoria de correções, sugestão de maestria e o cadastro completo de aprendiz (consentimento obrigatório, CPF único, equipe e responsáveis).
 
 ---
 

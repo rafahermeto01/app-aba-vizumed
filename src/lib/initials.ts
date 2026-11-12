@@ -5,6 +5,7 @@ export function makeInitials(name: string): string {
   return name
     .trim()
     .split(/\s+/)
+    .map((w) => w.replace(/[^\p{L}]/gu, '')) // ignora parênteses, números, pontuação
     .filter((w) => w && !CONNECTORS.has(w.toLowerCase()))
     .map((w) => w[0]!.toUpperCase())
     .join('')

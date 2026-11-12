@@ -1,8 +1,8 @@
-import { LogOut } from 'lucide-react'
-import { NavLink, Outlet } from 'react-router'
+import { LogOut, UserRound } from 'lucide-react'
+import { NavLink, Outlet, useNavigate } from 'react-router'
 
 import { Logo } from '@/components/brand/Logo'
-import { Avatar, AvatarFallback } from '@/components/ui/avatar'
+import { PersonAvatar } from '@/components/PersonAvatar'
 import { Button } from '@/components/ui/button'
 import {
   DropdownMenu,
@@ -13,21 +13,20 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { ROLE_LABEL, useAuth } from '@/features/auth/AuthProvider'
-import { avatarInitials } from '@/lib/initials'
+import { useClinic } from '@/features/settings/useClinic'
 import { cn } from '@/lib/utils'
 
 import { navFor } from './nav'
 
 function UserMenu({ compact = false }: { compact?: boolean }) {
   const { profile, signOut } = useAuth()
+  const navigate = useNavigate()
   if (!profile) return null
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <Button variant="ghost" className={cn('h-auto gap-3 px-2 py-2', compact ? '' : 'w-full justify-start')} aria-label="Menu da conta">
-          <Avatar className="size-9">
-            <AvatarFallback className="bg-secondary text-secondary-foreground">{avatarInitials(profile.full_name)}</AvatarFallback>
-          </Avatar>
+          <PersonAvatar name={profile.full_name} photoPath={profile.photo_path} bucket="profile-photos" className="size-9" />
           {!compact && (
             <span className="flex min-w-0 flex-col items-start text-left">
               <span className="truncate text-sm font-medium">{profile.full_name}</span>
@@ -42,6 +41,9 @@ function UserMenu({ compact = false }: { compact?: boolean }) {
           <span className="text-xs font-normal text-muted-foreground">{profile.email}</span>
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
+        <DropdownMenuItem onSelect={() => navigate('/perfil')} className="text-base md:text-sm">
+          <UserRound aria-hidden /> Meu perfil
+        </DropdownMenuItem>
         <DropdownMenuItem onSelect={() => void signOut()} className="text-base md:text-sm">
           <LogOut aria-hidden /> Sair
         </DropdownMenuItem>
@@ -55,6 +57,7 @@ function UserMenu({ compact = false }: { compact?: boolean }) {
  */
 export function AppLayout() {
   const { profile } = useAuth()
+  const clinic = useClinic()
   const items = profile ? navFor(profile.role) : []
 
   return (
@@ -63,6 +66,7 @@ export function AppLayout() {
       <aside className="sticky top-0 hidden h-dvh w-64 shrink-0 flex-col border-r border-sidebar-border bg-sidebar md:flex">
         <div className="px-5 py-6">
           <Logo />
+          {clinic.data && <p className="mt-2 truncate text-sm text-muted-foreground">{clinic.data.name}</p>}
         </div>
         <nav aria-label="Menu principal" className="flex flex-1 flex-col gap-1 px-3">
           {items.map(({ to, label, icon: Icon }) => (

@@ -10,7 +10,7 @@ Web app para clínicas de terapia ABA: cadastro de aprendizes, programas de ensi
 | Fase | Conteúdo | Situação |
 |---|---|---|
 | 1. Fundação | Projeto, banco completo + RLS, dados fictícios, primeiro Coordenador, login, troca obrigatória de senha, layout | ✅ pronta |
-| 2. Equipe e aprendizes | Convites, perfis, cadastro de aprendizes | ⏳ |
+| 2. Equipe e aprendizes | Equipe (cadastrar, editar, redefinir senha, desativar), Meu perfil, aprendizes (lista, cadastro, página), responsáveis, CIDs, equipe vinculada, consentimento LGPD, dados da clínica | ✅ pronta |
 | 3. Programas | Níveis de ajuda, biblioteca, programas, alvos, playlists | ⏳ |
 | 4. Coleta offline | Os 6 passos da coleta, fila de sincronização, assinatura | ⏳ |
 | 5. Evolução | Gráficos, sessões, maestria | ⏳ |
@@ -53,6 +53,7 @@ Copie o `.env.example` para um arquivo novo chamado `.env.local` (na mesma pasta
 | `FIRST_ADMIN_EMAIL` / `_PASSWORD` / `_NAME` | Primeiro(a) Coordenador(a) | não |
 | `FIRST_CLINIC_NAME` | Nome da clínica (opcional) | não |
 | `DEMO_PASSWORD` | Senha das 4 contas fictícias de teste | não |
+| `SUPABASE_ACCESS_TOKEN` | Chave da ferramenta do Supabase só para este projeto (opcional, ver abaixo) | **NUNCA** |
 
 > ⚠️ O `.env.local` nunca vai para o GitHub (está no `.gitignore`). Nunca coloque a chave secreta numa variável que começa com `VITE_`. O app se recusa a abrir se isso acontecer.
 
@@ -79,6 +80,14 @@ npm run db:push
 ```
 
 Isso cria todas as tabelas, regras de segurança, pastas de arquivos e a lista de CIDs.
+
+Depois, publique a função do servidor que gerencia a equipe (criar membros, redefinir senha, desativar):
+
+```bash
+npm run fn:deploy
+```
+
+> **Login da ferramenta do Supabase trocando sozinho?** Se você usa o Supabase em outros projetos, outro programa pode trocar a conta conectada. Para evitar isso, crie uma chave só deste projeto em **supabase.com → Account → Access Tokens → Generate new token** (escopo: só o projeto do LovABA) e coloque em `SUPABASE_ACCESS_TOKEN` no `.env.local`. Os comandos `npm run db:*` e `fn:deploy` usam essa chave automaticamente.
 
 ### 5. Dados de teste e primeiro(a) Coordenador(a)
 
@@ -115,7 +124,21 @@ Abra [http://localhost:5173](http://localhost:5173).
 | `npm test` | Cálculos, CPF, iniciais, datas | não |
 | `npm run test:db` | Todas as regras de segurança, num banco temporário no seu computador | não |
 | `npm run test:rls` | As regras no projeto real de testes, entrando como a AT fictícia | sim (depois do `seed:demo`) |
+| `npm run test:equipe` | Gestão de equipe: só a coordenação cria membros, troca obrigatória de senha, desativação | sim (depois do `seed:demo` e `fn:deploy`) |
+| `npm run test:fotos` | Fotos em pasta privada: só quem atende o aprendiz abre a foto | sim (depois do `seed:demo`) |
 | `npm run typecheck` | Erros de tipo no código | não |
+
+---
+
+## Como a equipe entra no sistema
+
+1. A coordenação vai em **Configurações → Equipe → Adicionar membro**: nome, e-mail, perfil de acesso e uma senha provisória (o sistema sugere uma).
+2. A tela mostra o e-mail e a senha provisória para repassar à pessoa (botão **Copiar dados**).
+3. No primeiro acesso, a pessoa é obrigada a criar uma senha nova antes de ver qualquer tela.
+4. Esqueceu a senha? A própria pessoa usa **Esqueci minha senha** (e-mail) ou a coordenação usa **Redefinir senha** (nova senha provisória).
+5. **Desativar acesso** corta o acesso na hora; as sessões que a pessoa registrou continuam guardadas.
+
+Para um aprendiz aparecer para alguém, a coordenação marca essa pessoa em **Equipe** no cadastro do aprendiz.
 
 ---
 
@@ -147,8 +170,8 @@ O envio de e-mails padrão do Supabase tem limite baixo (poucos e-mails por hora
 
 ```
 docs/        especificação e arquitetura
-scripts/     scripts locais (primeiro admin, dados fictícios, teste de RLS)
-supabase/    migrations do banco (tabelas, RLS, storage, views)
+scripts/     scripts locais (primeiro admin, dados fictícios, testes no projeto real)
+supabase/    migrations do banco (tabelas, RLS, storage, views) e a função admin-users
 src/         o app (features/ por área, components/, lib/)
 tests/       testes (unit/ e db/)
 ```

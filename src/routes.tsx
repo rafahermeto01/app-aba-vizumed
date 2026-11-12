@@ -8,6 +8,11 @@ import { RequireAuth } from '@/features/auth/RequireAuth'
 import { ResetPasswordPage } from '@/features/auth/ResetPasswordPage'
 import { ComingSoonPage } from '@/features/home/ComingSoonPage'
 import { HomePage } from '@/features/home/HomePage'
+import { LearnerFormPage } from '@/features/learners/LearnerFormPage'
+import { LearnerPage } from '@/features/learners/LearnerPage'
+import { LearnersPage } from '@/features/learners/LearnersPage'
+import { ProfilePage } from '@/features/profile/ProfilePage'
+import { SettingsPage } from '@/features/settings/SettingsPage'
 
 export const router = createBrowserRouter([
   // Telas públicas (não existe "criar conta")
@@ -25,10 +30,25 @@ export const router = createBrowserRouter([
     ),
     children: [
       { index: true, element: <HomePage /> },
+      { path: 'aprendizes', element: <LearnersPage /> },
       {
-        path: 'aprendizes',
-        element: <ComingSoonPage title="Aprendizes" phase={2} description="Lista, cadastro e página de cada aprendiz chegam na fase 2." />,
+        path: 'aprendizes/novo',
+        element: (
+          <RequireAuth roles={['coordenador']}>
+            <LearnerFormPage />
+          </RequireAuth>
+        ),
       },
+      { path: 'aprendizes/:id', element: <LearnerPage /> },
+      {
+        path: 'aprendizes/:id/editar',
+        element: (
+          <RequireAuth roles={['coordenador']}>
+            <LearnerFormPage />
+          </RequireAuth>
+        ),
+      },
+      { path: 'perfil', element: <ProfilePage /> },
       {
         path: 'biblioteca',
         element: (
@@ -41,7 +61,7 @@ export const router = createBrowserRouter([
         path: 'configuracoes',
         element: (
           <RequireAuth roles={['coordenador']}>
-            <ComingSoonPage title="Configurações" phase={2} description="Dados da clínica, equipe, níveis de ajuda e CIDs chegam nas fases 2 e 3." />
+            <SettingsPage />
           </RequireAuth>
         ),
       },
