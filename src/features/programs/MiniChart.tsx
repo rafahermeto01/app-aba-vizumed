@@ -12,7 +12,7 @@ export function MiniChart({ values, percent }: { values: number[]; percent: bool
   return (
     <div className="h-12 w-28" aria-hidden>
       <ResponsiveContainer width="100%" height="100%">
-        <LineChart data={data} margin={{ top: 4, right: 4, bottom: 4, left: 4 }}>
+        <LineChart data={data} margin={{ top: 4, right: 4, bottom: 4, left: 4 }} accessibilityLayer={false}>
           <YAxis hide domain={percent ? [0, 100] : [0, 'dataMax']} />
           <Line type="monotone" dataKey="v" stroke="var(--primary)" strokeWidth={2} dot={{ r: 2.5, fill: 'var(--primary)' }} isAnimationActive={false} />
         </LineChart>

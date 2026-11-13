@@ -35,7 +35,7 @@ export function LevelPicker({
         <button
           type="button"
           className="rounded-md focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none"
-          aria-label={`Nível de ajuda de ${targetName}: ${current?.name ?? 'sem nível'}. Toque para mudar.`}
+          aria-label={`${current?.abbreviation ?? 'Sem nível'}: nível de ajuda de ${targetName} (${current?.name ?? 'sem nível'}). Toque para mudar.`}
         >
           <PromptLevelBadge level={current} className="h-9 px-3" />
         </button>

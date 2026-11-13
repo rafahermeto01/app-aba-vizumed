@@ -1,97 +1,74 @@
-import { createBrowserRouter, Navigate } from 'react-router'
+import type { ComponentType, ReactNode } from 'react'
+import { createBrowserRouter, Navigate, type RouteObject } from 'react-router'
 
 import { AppLayout } from '@/components/layout/AppLayout'
 import { RouteError } from '@/components/RouteError'
 import { ChangePasswordPage } from '@/features/auth/ChangePasswordPage'
-import { CollectPage } from '@/features/collection/CollectPage'
-import { FinalizePage } from '@/features/collection/FinalizePage'
-import { NewSessionPage } from '@/features/collection/NewSessionPage'
-import { SummaryPage } from '@/features/collection/SummaryPage'
 import { ForgotPasswordPage } from '@/features/auth/ForgotPasswordPage'
 import { LoginPage } from '@/features/auth/LoginPage'
-import { RequireAuth } from '@/features/auth/RequireAuth'
+import { FullScreenLoader, RequireAuth } from '@/features/auth/RequireAuth'
 import { ResetPasswordPage } from '@/features/auth/ResetPasswordPage'
 import { HomePage } from '@/features/home/HomePage'
-import { SessionDetailPage } from '@/features/evolution/SessionDetailPage'
-import { LearnerFormPage } from '@/features/learners/LearnerFormPage'
-import { LearnerPage } from '@/features/learners/LearnerPage'
-import { LearnersPage } from '@/features/learners/LearnersPage'
-import { LibraryPage } from '@/features/library/LibraryPage'
-import { TemplateFormPage } from '@/features/library/TemplateFormPage'
-import { EditProgramPage, NewProgramPage } from '@/features/programs/ProgramFormPages'
-import { ProgramPage } from '@/features/programs/ProgramPage'
-import { ProfilePage } from '@/features/profile/ProfilePage'
-import { SettingsPage } from '@/features/settings/SettingsPage'
+import type { UserRole } from '@/features/auth/AuthProvider'
+
+/**
+ * Cada tela é carregada só quando é aberta (app mais leve). Todas ficam
+ * guardadas no aparelho pelo PWA, então continuam abrindo sem internet.
+ */
+function page<M>(load: () => Promise<M>, pick: (m: M) => ComponentType, wrap?: (el: ReactNode) => ReactNode): Pick<RouteObject, 'lazy'> {
+  return {
+    lazy: async () => {
+      const Component = pick(await load())
+      return { element: wrap ? wrap(<Component />) : <Component /> }
+    },
+  }
+}
+
+const onlyFor = (roles: UserRole[]) => (el: ReactNode) => <RequireAuth roles={roles}>{el}</RequireAuth>
+const signedIn = (el: ReactNode) => <RequireAuth>{el}</RequireAuth>
 
 export const router = createBrowserRouter([
   {
     errorElement: <RouteError />,
+    hydrateFallbackElement: <FullScreenLoader />,
     children: [
-  // Telas públicas (não existe "criar conta")
-  { path: '/login', element: <LoginPage /> },
-  { path: '/esqueci-senha', element: <ForgotPasswordPage /> },
-  { path: '/redefinir-senha', element: <ResetPasswordPage /> },
-  { path: '/trocar-senha', element: <ChangePasswordPage /> },
+      // Telas públicas (não existe "criar conta")
+      { path: '/login', element: <LoginPage /> },
+      { path: '/esqueci-senha', element: <ForgotPasswordPage /> },
+      { path: '/redefinir-senha', element: <ResetPasswordPage /> },
+      { path: '/trocar-senha', element: <ChangePasswordPage /> },
 
-  // Coleta: tela cheia, sem o menu (menos toques acidentais durante o atendimento)
-  ...[
-    ['aprendizes/:id/sessao/nova', <NewSessionPage />],
-    ['sessao/:sessionId', <CollectPage />],
-    ['sessao/:sessionId/finalizar', <FinalizePage />],
-    ['sessao/:sessionId/resumo', <SummaryPage />],
-  ].map(([path, page]) => ({ path: `/${path as string}`, element: <RequireAuth>{page}</RequireAuth> })),
+      // Coleta: tela cheia, sem o menu (menos toques acidentais durante o atendimento)
+      { path: '/aprendizes/:id/sessao/nova', ...page(() => import('@/features/collection/NewSessionPage'), (m) => m.NewSessionPage, signedIn) },
+      { path: '/sessao/:sessionId', ...page(() => import('@/features/collection/CollectPage'), (m) => m.CollectPage, signedIn) },
+      { path: '/sessao/:sessionId/finalizar', ...page(() => import('@/features/collection/FinalizePage'), (m) => m.FinalizePage, signedIn) },
+      { path: '/sessao/:sessionId/resumo', ...page(() => import('@/features/collection/SummaryPage'), (m) => m.SummaryPage, signedIn) },
 
-  // Telas internas
-  {
-    element: (
-      <RequireAuth>
-        <AppLayout />
-      </RequireAuth>
-    ),
-    children: [
-      { index: true, element: <HomePage /> },
-      { path: 'aprendizes', element: <LearnersPage /> },
+      // Telas internas
       {
-        path: 'aprendizes/novo',
         element: (
-          <RequireAuth roles={['coordenador']}>
-            <LearnerFormPage />
+          <RequireAuth>
+            <AppLayout />
           </RequireAuth>
         ),
+        children: [
+          { index: true, element: <HomePage /> },
+          { path: 'aprendizes', ...page(() => import('@/features/learners/LearnersPage'), (m) => m.LearnersPage) },
+          { path: 'aprendizes/novo', ...page(() => import('@/features/learners/LearnerFormPage'), (m) => m.LearnerFormPage, onlyFor(['coordenador'])) },
+          { path: 'aprendizes/:id', ...page(() => import('@/features/learners/LearnerPage'), (m) => m.LearnerPage) },
+          { path: 'aprendizes/:id/editar', ...page(() => import('@/features/learners/LearnerFormPage'), (m) => m.LearnerFormPage, onlyFor(['coordenador'])) },
+          { path: 'aprendizes/:id/sessoes/:sessionId', ...page(() => import('@/features/evolution/SessionDetailPage'), (m) => m.SessionDetailPage) },
+          { path: 'aprendizes/:id/programas/novo', ...page(() => import('@/features/programs/ProgramFormPages'), (m) => m.NewProgramPage) },
+          { path: 'aprendizes/:id/programas/:programId', ...page(() => import('@/features/programs/ProgramPage'), (m) => m.ProgramPage) },
+          { path: 'aprendizes/:id/programas/:programId/editar', ...page(() => import('@/features/programs/ProgramFormPages'), (m) => m.EditProgramPage) },
+          { path: 'perfil', ...page(() => import('@/features/profile/ProfilePage'), (m) => m.ProfilePage) },
+          { path: 'biblioteca', ...page(() => import('@/features/library/LibraryPage'), (m) => m.LibraryPage, onlyFor(['coordenador', 'supervisor'])) },
+          { path: 'biblioteca/novo', ...page(() => import('@/features/library/TemplateFormPage'), (m) => m.TemplateFormPage, onlyFor(['coordenador', 'supervisor'])) },
+          { path: 'biblioteca/:id', ...page(() => import('@/features/library/TemplateFormPage'), (m) => m.TemplateFormPage, onlyFor(['coordenador', 'supervisor'])) },
+          { path: 'configuracoes', ...page(() => import('@/features/settings/SettingsPage'), (m) => m.SettingsPage, onlyFor(['coordenador'])) },
+        ],
       },
-      { path: 'aprendizes/:id', element: <LearnerPage /> },
-      {
-        path: 'aprendizes/:id/editar',
-        element: (
-          <RequireAuth roles={['coordenador']}>
-            <LearnerFormPage />
-          </RequireAuth>
-        ),
-      },
-      { path: 'aprendizes/:id/sessoes/:sessionId', element: <SessionDetailPage /> },
-      { path: 'aprendizes/:id/programas/novo', element: <NewProgramPage /> },
-      { path: 'aprendizes/:id/programas/:programId', element: <ProgramPage /> },
-      { path: 'aprendizes/:id/programas/:programId/editar', element: <EditProgramPage /> },
-      { path: 'perfil', element: <ProfilePage /> },
-      ...['biblioteca', 'biblioteca/novo', 'biblioteca/:id'].map((path) => ({
-        path,
-        element: (
-          <RequireAuth roles={['coordenador', 'supervisor']}>
-            {path === 'biblioteca' ? <LibraryPage /> : <TemplateFormPage />}
-          </RequireAuth>
-        ),
-      })),
-      {
-        path: 'configuracoes',
-        element: (
-          <RequireAuth roles={['coordenador']}>
-            <SettingsPage />
-          </RequireAuth>
-        ),
-      },
-    ],
-  },
-  { path: '*', element: <Navigate to="/" replace /> },
+      { path: '*', element: <Navigate to="/" replace /> },
     ],
   },
 ])

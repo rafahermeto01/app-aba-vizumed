@@ -14,7 +14,7 @@ Web app para clínicas de terapia ABA: cadastro de aprendizes, programas de ensi
 | 3. Programas | Níveis de ajuda (ordem, nomes, cores), biblioteca com pastas e filtros, programas do aprendiz (da biblioteca ou do zero), alvos com fila e fases, masterizar/manutenção, playlists, histórico de mudanças | ✅ pronta |
 | 4. Coleta offline | Os 6 passos da coleta, cada toque salvo no aparelho, fila de sincronização sem duplicar, retomar sessão, assinatura, resumo, app abre sem internet | ✅ pronta |
 | 5. Evolução | Aba Desempenho (período, números, gráfico Aquisição/Redução), gráfico por alvo colorido pelo nível de ajuda, lista de sessões agrupada com filtros, detalhe da sessão com correções auditadas, prontos para masterizar e revisões de manutenção na tela inicial | ✅ pronta |
-| 6. Acabamento | PWA instalável, revisão final, deploy | ⏳ |
+| 6. Acabamento | PWA instalável (ícone, nome, telas de abertura), ajuda para instalar, aviso de nova versão, app mais leve, revisão de acessibilidade (WCAG 2.1 AA), cabeçalhos de segurança, publicação na Vercel | ✅ pronta |
 
 ---
 
@@ -28,7 +28,7 @@ Você precisa do **Node.js 22** ou mais novo ([nodejs.org](https://nodejs.org)).
 2. Nome: `lovaba-dev` (este é o projeto de **testes**, com dados fictícios). Região: **South America (São Paulo)**.
 3. Guarde a senha do banco num lugar seguro.
 
-> Mais tarde, para uso real, crie um segundo projeto `lovaba-prod` e repita os passos **sem** rodar o `seed:demo`.
+> Para uso real, veja a seção **Publicar para uso real** (um segundo projeto, só com dados reais).
 
 ### 2. Ajustar o login no painel do Supabase
 
@@ -127,6 +127,7 @@ Abra [http://localhost:5173](http://localhost:5173).
 | `npm run test:equipe` | Gestão de equipe: só a coordenação cria membros, troca obrigatória de senha, desativação | sim (depois do `seed:demo` e `fn:deploy`) |
 | `npm run test:fotos` | Fotos em pasta privada: só quem atende o aprendiz abre a foto | sim (depois do `seed:demo`) |
 | `npm run test:offline` | **Coleta sem internet num Chrome de verdade**: registra offline, recarrega a página, finaliza, volta a internet e confere no banco que tudo chegou sem duplicar | sim (depois do `seed:demo`; usa o Chrome instalado) |
+| `npm run test:a11y` | **Acessibilidade (WCAG 2.1 AA)** em todas as telas, no celular e no computador, e se a política de segurança bloqueia algo do app | sim (depois do `seed:demo`; usa o Chrome instalado) |
 | `npm run typecheck` | Erros de tipo no código | não |
 
 ---
@@ -167,7 +168,7 @@ Para um aprendiz aparecer para alguém, a coordenação marca essa pessoa em **E
 - **Desfazer** não apaga: marca o toque como desfeito (ele some da conta, mas fica rastreável).
 - Ao tentar **Sair** da conta com registros ainda não enviados, o app avisa.
 
-**Abrir sem internet:** depois do primeiro acesso com internet, o app fica guardado no aparelho e baixa sozinho os aprendizes e programas de quem está logado. Para instalar no celular como aplicativo (ícone na tela inicial), o app precisa estar publicado com HTTPS (fase 6).
+**Abrir sem internet:** depois do primeiro acesso com internet, o app fica guardado no aparelho e baixa sozinho os aprendizes e programas de quem está logado.
 
 ---
 
@@ -190,18 +191,79 @@ O envio de e-mails padrão do Supabase tem limite baixo (poucos e-mails por hora
 3. No Supabase: **Authentication → Emails → SMTP Settings** → ative **Custom SMTP**:
    - Host: `smtp.resend.com` · Porta: `465` · Usuário: `resend` · Senha: a chave do Resend
    - Remetente: `nao-responda@clinica.com.br` · Nome: `LovABA`
-4. Em **Authentication → Emails → Templates → Reset Password**, traduza o texto do e-mail para português.
+4. Em **Authentication → Emails → Templates → Reset Password**, troque o texto por algo em português, por exemplo:
+   - Assunto: `Redefinir sua senha do LovABA`
+   - Mensagem: `<p>Olá! Para criar uma senha nova no LovABA, toque no link abaixo:</p><p><a href="{{ .ConfirmationURL }}">Criar nova senha</a></p><p>Se você não pediu, ignore este e-mail.</p>`
 
 ---
 
-## Publicar na Vercel
+## Instalar no celular (PWA)
 
-(O passo a passo final vem na fase 6.)
+O LovABA é um **PWA**: instala direto pelo navegador, sem App Store nem Google Play. Fica com ícone na tela inicial, abre em tela cheia e funciona sem internet. No app, o menu da sua foto tem **Instalar o app** com o passo a passo, e no celular aparece um aviso na tela inicial.
 
-1. Em [vercel.com](https://vercel.com) → **Add New → Project** → importe o repositório do GitHub.
-2. Framework: **Vite** (detectado sozinho).
-3. Em **Environment Variables**, adicione **só** `VITE_SUPABASE_URL` e `VITE_SUPABASE_ANON_KEY` (do projeto de produção).
-4. **Deploy**. Depois, coloque o endereço da Vercel em **Site URL** e **Redirect URLs** no Supabase (passo 2).
+- **Android (Chrome):** toque em **Instalar** no aviso do app, ou no menu ⋮ → **Instalar app**.
+- **iPhone/iPad (Safari):** botão **Compartilhar** → **Adicionar à Tela de Início** → **Adicionar**. (No iPhone, só pelo Safari.)
+- **Computador (Chrome/Edge):** ícone de instalar no fim da barra de endereço.
+
+**Atualizações:** quando sai uma versão nova, aparece **"Nova versão do LovABA disponível · Atualizar"** nas telas comuns. O app **nunca recarrega sozinho durante uma sessão de coleta**.
+
+> Ícones e telas de abertura: `public/icons/`. Para trocar o desenho, edite `scripts/generate-icons.mjs` e rode `node scripts/generate-icons.mjs`.
+
+---
+
+## Publicar para uso real (produção)
+
+Use um projeto do Supabase **separado** do de testes, só com dados reais (nunca rode o `seed:demo` nele).
+
+### 1. Supabase de produção
+
+1. Em [supabase.com](https://supabase.com) → **New project** → nome `lovaba-prod`, região **South America (São Paulo)** (os dados de saúde ficam no Brasil e o app fica mais rápido).
+2. Recomendado: plano **Pro**, que tem backup diário automático. Para dados clínicos, vale a pena.
+3. Faça os ajustes de login do passo 2 de "Como rodar no seu computador" (sem cadastro público, senha mínima 8, sessão sem limite de tempo).
+4. Configure o e-mail próprio (SMTP), na seção abaixo, para o "Esqueci minha senha" funcionar sem limite.
+
+### 2. Arquivo `.env.producao.local`
+
+Copie o `.env.example` para um arquivo novo chamado `.env.producao.local` e preencha com os dados do projeto **de produção**: `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`, `SUPABASE_ACCESS_TOKEN` (uma chave em **Account → Access Tokens** com acesso só ao projeto de produção) e `FIRST_ADMIN_EMAIL` / `_PASSWORD` / `_NAME` / `FIRST_CLINIC_NAME`. Esse arquivo também nunca vai para o GitHub.
+
+### 3. Criar o banco, a função da equipe e a sua conta
+
+```bash
+npm run prod:db:push
+```
+
+```bash
+npm run prod:fn:deploy
+```
+
+```bash
+npm run prod:admin:create
+```
+
+Depois apague `FIRST_ADMIN_PASSWORD` do `.env.producao.local`.
+
+### 4. Vercel
+
+1. Em [vercel.com](https://vercel.com) (pode entrar com o GitHub) → **Add New → Project** → importe o repositório `app-aba-vizumed`.
+2. Framework: **Vite** (detectado sozinho; as configurações já estão no `vercel.json`).
+3. Em **Environment Variables**, adicione **só** estas duas, do projeto **de produção**:
+   - `VITE_SUPABASE_URL`
+   - `VITE_SUPABASE_ANON_KEY` (a chave **pública**)
+
+   ⚠️ Nunca coloque a chave secreta na Vercel.
+4. **Deploy**. Em 1 a 2 minutos sai um endereço como `https://lovaba.vercel.app` (dá para trocar por um domínio próprio em **Settings → Domains**).
+5. No Supabase de produção → **Authentication → URL Configuration**:
+   - **Site URL**: o endereço da Vercel
+   - **Redirect URLs**: `https://SEU-ENDERECO/redefinir-senha`
+6. Abra o endereço no celular, entre com a sua conta e instale o app.
+
+A cada envio para o GitHub (`main`), a Vercel publica a versão nova sozinha, e os aparelhos mostram o aviso **Atualizar**.
+
+### Segurança já configurada
+
+- Todas as tabelas com regras de acesso (RLS); a chave secreta só existe nos scripts do seu computador e na função do servidor.
+- Cabeçalhos de segurança no `vercel.json`: o app só conversa com o Supabase (Content-Security-Policy), não pode ser aberto dentro de outro site, HTTPS obrigatório, sem acesso a câmera, microfone ou localização.
+- Fotos e assinaturas em pastas privadas, abertas só por link temporário.
 
 ---
 
@@ -209,8 +271,9 @@ O envio de e-mails padrão do Supabase tem limite baixo (poucos e-mails por hora
 
 ```
 docs/        especificação e arquitetura
-scripts/     scripts locais (primeiro admin, dados fictícios, testes no projeto real)
+scripts/     scripts locais (primeiro admin, dados fictícios, testes no projeto real, ícones)
 supabase/    migrations do banco (tabelas, RLS, storage, views) e a função admin-users
-src/         o app (features/ por área, components/, lib/)
+src/         o app (features/ por área, components/, lib/, offline/ = cofre do aparelho, pwa/)
+public/      ícones e telas de abertura do app
 tests/       testes (unit/, db/ e e2e/ — o teste da coleta sem internet)
 ```

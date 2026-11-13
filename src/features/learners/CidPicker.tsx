@@ -22,7 +22,7 @@ export function CidPicker({ value, onChange, id }: { value: string[]; onChange: 
     <div className="flex flex-col gap-3">
       <Popover open={open} onOpenChange={setOpen}>
         <PopoverTrigger asChild>
-          <Button id={id} type="button" variant="outline" role="combobox" aria-expanded={open} className="w-full justify-between font-normal">
+          <Button id={id} type="button" variant="outline" role="combobox" aria-expanded={open} aria-label="Buscar CID por código ou nome" className="w-full justify-between font-normal">
             <span className="truncate text-muted-foreground">{codes.isPending ? 'Carregando CIDs…' : 'Buscar CID por código ou nome'}</span>
             <ChevronsUpDown className="opacity-50" aria-hidden />
           </Button>

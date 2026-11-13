@@ -4,6 +4,7 @@ import { CalendarClock, Sparkles, Users } from 'lucide-react'
 import { PageHeader } from '@/components/layout/PageHeader'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { useAuth } from '@/features/auth/AuthProvider'
+import { InstallBanner } from '@/pwa/InstallHelp'
 
 import { MaintenanceDueCard, ReadyToMasterCard, useReadyToMaster } from './HomeLists'
 import { formatDateTime, greeting, timeAgo } from '@/lib/dates'
@@ -38,6 +39,7 @@ export function HomePage() {
   return (
     <>
       <PageHeader title={`${greeting()}, ${firstName}!`} description="Este é o resumo da clínica." />
+      <InstallBanner />
 
       <div className="grid gap-4 md:grid-cols-3">
         <Card>

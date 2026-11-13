@@ -58,31 +58,41 @@ export function protocolText(protocol: Protocol | null, other: string | null): s
  * Cores permitidas para os níveis de ajuda: roxos, azuis e cinzas.
  * Verde, amarelo e vermelho são RESERVADOS para acerto, dica e erro.
  */
+// Todas com contraste ≥ 4,5:1 para a sigla (conferido).
 export const LEVEL_PALETTE = [
   '#4c1d95',
+  '#5b21b6',
   '#6d28d9',
   '#7c3aed',
-  '#8b5cf6',
+  '#86198f',
   '#a21caf',
+  '#3730a3',
   '#4338ca',
-  '#6366f1',
+  '#4f46e5',
   '#1e3a8a',
   '#1e40af',
   '#2563eb',
-  '#3b82f6',
-  '#0ea5e9',
-  '#0891b2',
+  '#0369a1',
+  '#0e7490',
   '#334155',
-  '#64748b',
 ]
 
-/** Texto branco ou escuro, conforme o fundo (contraste). */
-export function readableTextColor(hex: string): string {
+function luminance(hex: string): number {
   const h = hex.replace('#', '')
   const [r, g, b] = [0, 2, 4].map((i) => parseInt(h.slice(i, i + 2), 16) / 255)
   const lin = (c: number) => (c <= 0.03928 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4)
-  const lum = 0.2126 * lin(r) + 0.7152 * lin(g) + 0.0722 * lin(b)
-  return lum > 0.4 ? '#0f172a' : '#ffffff'
+  return 0.2126 * lin(r) + 0.7152 * lin(g) + 0.0722 * lin(b)
+}
+
+/** Razão de contraste entre duas cores (WCAG). */
+export function contrastRatio(a: string, b: string): number {
+  const [x, y] = [luminance(a), luminance(b)].sort((p, q) => q - p)
+  return (x + 0.05) / (y + 0.05)
+}
+
+/** Texto branco ou escuro: o que tiver mais contraste com o fundo. */
+export function readableTextColor(hex: string): string {
+  return contrastRatio(hex, '#ffffff') >= contrastRatio(hex, '#0f172a') ? '#ffffff' : '#0f172a'
 }
 
 export const DEFAULT_MASTERY = { mastery_min_pct: 80, mastery_sessions: 3, mastery_min_trials: 5 }

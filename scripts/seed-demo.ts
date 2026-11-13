@@ -5,7 +5,10 @@
 //
 // 1. Preencha DEMO_PASSWORD no .env.local (senha das 4 contas de teste, mín. 8 caracteres)
 // 2. Rode:  npm run seed:demo
-import { adminClient, check, fail, requireEnv, step } from './_lib.ts'
+import { adminClient, check, fail, IS_PROD, requireEnv, step } from './_lib.ts'
+
+// Dados fictícios NUNCA vão para o projeto de produção.
+if (IS_PROD) fail('O seed de demonstração não pode rodar no projeto de produção.')
 
 const DEMO_CLINIC = 'Clínica Demonstração LovABA'
 const password = requireEnv('DEMO_PASSWORD')

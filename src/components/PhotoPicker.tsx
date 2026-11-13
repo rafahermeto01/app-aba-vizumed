@@ -60,6 +60,8 @@ export function PhotoPicker({
           type="file"
           accept={ACCEPTED_IMAGES}
           className="sr-only"
+          tabIndex={-1}
+          aria-label="Escolher foto"
           disabled={disabled}
           onChange={(e) => {
             const file = e.target.files?.[0]

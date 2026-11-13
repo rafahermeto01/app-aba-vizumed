@@ -20,7 +20,11 @@
     "fn:deploy": "node scripts/supabase-cli.mjs functions deploy admin-users --use-api --no-verify-jwt",
     "test:equipe": "tsx scripts/test-team.ts",
     "test:fotos": "tsx scripts/test-photos.ts",
-    "test:offline": "node tests/e2e/offline.e2e.mjs"
+    "test:offline": "node tests/e2e/offline.e2e.mjs",
+    "test:a11y": "node tests/e2e/a11y.e2e.mjs",
+    "prod:db:push": "node scripts/supabase-cli.mjs --prod db push --remote",
+    "prod:fn:deploy": "node scripts/supabase-cli.mjs --prod functions deploy admin-users --use-api --no-verify-jwt --remote",
+    "prod:admin:create": "tsx scripts/create-first-admin.ts --prod"
   },
   "dependencies": {
     "@fontsource-variable/geist": "^5.3.0",
@@ -58,6 +62,7 @@
     "@types/react-dom": "^19.3.0",
     "@types/react-signature-canvas": "^1.0.7",
     "@vitejs/plugin-react": "^6.1.2",
+    "axe-core": "^4.14.0",
     "dotenv": "^18.0.10",
     "fake-indexeddb": "^6.2.8",
     "oxlint": "^1.90.0",

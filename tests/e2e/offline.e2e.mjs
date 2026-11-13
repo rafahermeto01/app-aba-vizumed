@@ -164,7 +164,7 @@ try {
   await page.getByRole('button', { name: 'Registrar', exact: true }).click()
   await page.waitForURL(/\/sessao\/[0-9a-f-]{36}$/)
   const lauraSession = page.url().split('/').pop()
-  const firstPlus = page.getByRole('button', { name: /^Acerto independente em / }).first()
+  const firstPlus = page.getByRole('button', { name: /Acerto independente em / }).first()
   await firstPlus.click()
   await firstPlus.click()
   await page.getByRole('button', { name: 'Finalizar' }).click()

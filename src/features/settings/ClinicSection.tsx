@@ -95,6 +95,8 @@ function ClinicForm({ clinic }: { clinic: Clinic }) {
                   type="file"
                   accept={ACCEPTED_IMAGES}
                   className="sr-only"
+                  tabIndex={-1}
+                  aria-label="Escolher logo"
                   onChange={(e) => {
                     const f = e.target.files?.[0]
                     if (f) setLogo(f)

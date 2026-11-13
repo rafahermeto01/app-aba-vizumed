@@ -91,13 +91,13 @@ export function RichTextEditor({
   return (
     <div className="flex flex-col gap-2">
       <div className="flex gap-1" role="toolbar" aria-label="Formatação">
-        <Button type="button" variant="outline" size="sm" onClick={wrapBold} aria-label="Negrito" title="Negrito">
+        <Button type="button" variant="outline" size="sm" onClick={wrapBold} title="Deixar o texto selecionado em negrito">
           <Bold aria-hidden /> Negrito
         </Button>
-        <Button type="button" variant="outline" size="sm" onClick={() => prefixLines(false)} aria-label="Lista" title="Lista">
+        <Button type="button" variant="outline" size="sm" onClick={() => prefixLines(false)} title="Transformar as linhas em lista">
           <List aria-hidden /> Lista
         </Button>
-        <Button type="button" variant="outline" size="sm" onClick={() => prefixLines(true)} aria-label="Lista numerada" title="Lista numerada">
+        <Button type="button" variant="outline" size="sm" onClick={() => prefixLines(true)} title="Transformar as linhas em passos numerados">
           <ListOrdered aria-hidden /> Passos
         </Button>
       </div>

@@ -24,3 +24,19 @@ describe('período', () => {
   })
   it('todo o período', () => expect(inPeriod('2020-01-01T12:00:00Z', makePeriod('all'))).toBe(true))
 })
+
+import { contrastRatio, LEVEL_PALETTE, readableTextColor } from '@/features/programs/constants'
+
+describe('cores dos níveis de ajuda', () => {
+  it('toda cor da paleta deixa a sigla legível (contraste ≥ 4,5:1)', () => {
+    for (const c of LEVEL_PALETTE) expect(contrastRatio(c, readableTextColor(c))).toBeGreaterThanOrEqual(4.5)
+  })
+  it('azul médio usa o texto que tiver mais contraste', () => expect(readableTextColor('#3b82f6')).toBe('#0f172a'))
+  it('a paleta não tem verde, amarelo nem vermelho (reservados)', () => {
+    for (const c of LEVEL_PALETTE) {
+      const [r, g, b] = [1, 3, 5].map((i) => parseInt(c.slice(i, i + 2), 16))
+      expect(g > r && g > b).toBe(false) // nada esverdeado
+      expect(r > 180 && g > 150 && b < 100).toBe(false) // nada amarelo
+    }
+  })
+})

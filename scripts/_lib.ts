@@ -3,12 +3,15 @@
 import { createClient, type SupabaseClient } from '@supabase/supabase-js'
 import { config } from 'dotenv'
 
-config({ path: '.env.local', quiet: true })
+// Com --prod (ex.: npm run prod:admin:create) usa o arquivo do projeto de PRODUÇÃO.
+export const IS_PROD = process.argv.includes('--prod')
+export const ENV_FILE = IS_PROD ? '.env.producao.local' : '.env.local'
+config({ path: ENV_FILE, quiet: true })
 
 export function requireEnv(name: string): string {
   const value = process.env[name]?.trim()
   if (!value) {
-    fail(`Faltou preencher ${name} no arquivo .env.local`)
+    fail(`Faltou preencher ${name} no arquivo ${ENV_FILE}`)
   }
   return value
 }

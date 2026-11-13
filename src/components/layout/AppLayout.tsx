@@ -1,4 +1,4 @@
-import { LogOut, UserRound } from 'lucide-react'
+import { Download, LogOut, UserRound } from 'lucide-react'
 import { useState } from 'react'
 import { NavLink, Outlet, useNavigate } from 'react-router'
 
@@ -29,6 +29,9 @@ import { OpenSessionBanner } from '@/features/collection/OpenSessionBanner'
 import { useClinic } from '@/features/settings/useClinic'
 import { pendingCount } from '@/offline'
 import { SyncIndicator } from '@/offline/SyncIndicator'
+import { InstallDialog } from '@/pwa/InstallHelp'
+import { useInstall } from '@/pwa/pwa'
+import { UpdateBanner } from '@/pwa/UpdateBanner'
 import { cn } from '@/lib/utils'
 
 import { navFor } from './nav'
@@ -37,6 +40,8 @@ function UserMenu({ compact = false }: { compact?: boolean }) {
   const { profile, signOut } = useAuth()
   const navigate = useNavigate()
   const [pendingToLeave, setPendingToLeave] = useState<number | null>(null)
+  const [installOpen, setInstallOpen] = useState(false)
+  const install = useInstall()
   if (!profile) return null
 
   async function trySignOut() {
@@ -49,7 +54,8 @@ function UserMenu({ compact = false }: { compact?: boolean }) {
     <>
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="ghost" className={cn('h-auto gap-3 px-2 py-2', compact ? '' : 'w-full justify-start')} aria-label="Menu da conta">
+        <Button variant="ghost" className={cn('h-auto gap-3 px-2 py-2', compact ? '' : 'w-full justify-start')}>
+          <span className="sr-only">Abrir menu da conta:</span>
           <PersonAvatar name={profile.full_name} photoPath={profile.photo_path} bucket="profile-photos" className="size-9" />
           {!compact && (
             <span className="flex min-w-0 flex-col items-start text-left">
@@ -68,11 +74,17 @@ function UserMenu({ compact = false }: { compact?: boolean }) {
         <DropdownMenuItem onSelect={() => navigate('/perfil')} className="text-base md:text-sm">
           <UserRound aria-hidden /> Meu perfil
         </DropdownMenuItem>
+        {!install.installed && (
+          <DropdownMenuItem onSelect={() => setInstallOpen(true)} className="text-base md:text-sm">
+            <Download aria-hidden /> Instalar o app
+          </DropdownMenuItem>
+        )}
         <DropdownMenuItem onSelect={() => void trySignOut()} className="text-base md:text-sm">
           <LogOut aria-hidden /> Sair
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
+    <InstallDialog open={installOpen} onOpenChange={setInstallOpen} />
     <AlertDialog open={pendingToLeave !== null} onOpenChange={(o) => !o && setPendingToLeave(null)}>
       <AlertDialogContent>
         <AlertDialogHeader>
@@ -146,6 +158,7 @@ export function AppLayout() {
         <main className="mx-auto w-full max-w-6xl flex-1 px-4 pt-6 pb-28 md:px-8 md:pt-10 md:pb-10">
           <OpenSessionBanner />
           <Outlet />
+          <UpdateBanner />
         </main>
       </div>
 

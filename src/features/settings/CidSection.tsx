@@ -144,7 +144,7 @@ export function CidSection() {
             <Search className="pointer-events-none absolute top-1/2 left-3 size-5 -translate-y-1/2 text-muted-foreground" aria-hidden />
             <Input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Buscar código ou descrição" className="pl-10" aria-label="Buscar CID de referência" />
           </div>
-          <ul className="flex max-h-96 flex-col divide-y overflow-y-auto">
+          <ul className="flex max-h-96 flex-col divide-y overflow-y-auto rounded-md focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none" tabIndex={0} aria-label="Lista de CIDs de referência">
             {reference.map((c) => (
               <li key={c.id} className="flex gap-3 py-2">
                 <span className="w-20 shrink-0 font-medium">{c.code}</span>

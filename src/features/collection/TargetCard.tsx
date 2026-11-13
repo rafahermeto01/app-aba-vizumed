@@ -78,7 +78,7 @@ export function TargetCard({
                 type="button"
                 onClick={() => actions.onResult('erro')}
                 className="h-16 rounded-xl bg-erro text-3xl font-bold text-erro-foreground shadow-sm active:scale-95"
-                aria-label={`Erro em ${target.name}`}
+                aria-label={`− Erro em ${target.name}`}
               >
                 −
               </button>
@@ -86,7 +86,7 @@ export function TargetCard({
                 type="button"
                 onClick={actions.onDica}
                 className="h-16 rounded-xl bg-dica text-xl font-bold text-dica-foreground shadow-sm active:scale-95"
-                aria-label={`Acerto com dica em ${target.name}`}
+                aria-label={`DICA: acerto com dica em ${target.name}`}
               >
                 DICA
               </button>
@@ -94,7 +94,7 @@ export function TargetCard({
                 type="button"
                 onClick={() => actions.onResult('acerto')}
                 className="h-16 rounded-xl bg-acerto text-3xl font-bold text-acerto-foreground shadow-sm active:scale-95"
-                aria-label={`Acerto independente em ${target.name}`}
+                aria-label={`+ Acerto independente em ${target.name}`}
               >
                 +
               </button>
@@ -114,7 +114,7 @@ export function TargetCard({
               type="button"
               onClick={actions.onCount}
               className="flex h-16 flex-1 items-center justify-center gap-2 rounded-xl bg-primary text-2xl font-bold text-primary-foreground shadow-sm active:scale-95"
-              aria-label={`Mais uma ocorrência de ${target.name}`}
+              aria-label={`+1: mais uma ocorrência de ${target.name}`}
             >
               <Plus className="size-7" aria-hidden /> 1
             </button>

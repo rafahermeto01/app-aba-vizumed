@@ -11,6 +11,7 @@ import { AuthProvider } from '@/features/auth/AuthProvider'
 import { isSupabaseConfigured } from '@/lib/supabase'
 import { startSyncLoop } from '@/offline'
 import { queryPersister, shouldPersistQuery } from '@/offline/queryPersist'
+import { initPwa } from '@/pwa/pwa'
 import { router } from '@/routes'
 
 const DAY = 24 * 60 * 60 * 1000
@@ -41,6 +42,7 @@ function MissingConfig() {
   )
 }
 
+initPwa()
 if (isSupabaseConfigured) startSyncLoop()
 
 createRoot(document.getElementById('root')!).render(
