@@ -6,11 +6,14 @@ import { ForgotPasswordPage } from '@/features/auth/ForgotPasswordPage'
 import { LoginPage } from '@/features/auth/LoginPage'
 import { RequireAuth } from '@/features/auth/RequireAuth'
 import { ResetPasswordPage } from '@/features/auth/ResetPasswordPage'
-import { ComingSoonPage } from '@/features/home/ComingSoonPage'
 import { HomePage } from '@/features/home/HomePage'
 import { LearnerFormPage } from '@/features/learners/LearnerFormPage'
 import { LearnerPage } from '@/features/learners/LearnerPage'
 import { LearnersPage } from '@/features/learners/LearnersPage'
+import { LibraryPage } from '@/features/library/LibraryPage'
+import { TemplateFormPage } from '@/features/library/TemplateFormPage'
+import { EditProgramPage, NewProgramPage } from '@/features/programs/ProgramFormPages'
+import { ProgramPage } from '@/features/programs/ProgramPage'
 import { ProfilePage } from '@/features/profile/ProfilePage'
 import { SettingsPage } from '@/features/settings/SettingsPage'
 
@@ -48,15 +51,18 @@ export const router = createBrowserRouter([
           </RequireAuth>
         ),
       },
+      { path: 'aprendizes/:id/programas/novo', element: <NewProgramPage /> },
+      { path: 'aprendizes/:id/programas/:programId', element: <ProgramPage /> },
+      { path: 'aprendizes/:id/programas/:programId/editar', element: <EditProgramPage /> },
       { path: 'perfil', element: <ProfilePage /> },
-      {
-        path: 'biblioteca',
+      ...['biblioteca', 'biblioteca/novo', 'biblioteca/:id'].map((path) => ({
+        path,
         element: (
           <RequireAuth roles={['coordenador', 'supervisor']}>
-            <ComingSoonPage title="Biblioteca de programas" phase={3} description="Modelos de programas com alvos sugeridos e critério de maestria chegam na fase 3." />
+            {path === 'biblioteca' ? <LibraryPage /> : <TemplateFormPage />}
           </RequireAuth>
         ),
-      },
+      })),
       {
         path: 'configuracoes',
         element: (

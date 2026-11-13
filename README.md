@@ -11,7 +11,7 @@ Web app para clínicas de terapia ABA: cadastro de aprendizes, programas de ensi
 |---|---|---|
 | 1. Fundação | Projeto, banco completo + RLS, dados fictícios, primeiro Coordenador, login, troca obrigatória de senha, layout | ✅ pronta |
 | 2. Equipe e aprendizes | Equipe (cadastrar, editar, redefinir senha, desativar), Meu perfil, aprendizes (lista, cadastro, página), responsáveis, CIDs, equipe vinculada, consentimento LGPD, dados da clínica | ✅ pronta |
-| 3. Programas | Níveis de ajuda, biblioteca, programas, alvos, playlists | ⏳ |
+| 3. Programas | Níveis de ajuda (ordem, nomes, cores), biblioteca com pastas e filtros, programas do aprendiz (da biblioteca ou do zero), alvos com fila e fases, masterizar/manutenção, playlists, histórico de mudanças | ✅ pronta |
 | 4. Coleta offline | Os 6 passos da coleta, fila de sincronização, assinatura | ⏳ |
 | 5. Evolução | Gráficos, sessões, maestria | ⏳ |
 | 6. Acabamento | PWA instalável, revisão final, deploy | ⏳ |
@@ -123,7 +123,7 @@ Abra [http://localhost:5173](http://localhost:5173).
 |---|---|---|
 | `npm test` | Cálculos, CPF, iniciais, datas | não |
 | `npm run test:db` | Todas as regras de segurança, num banco temporário no seu computador | não |
-| `npm run test:rls` | As regras no projeto real de testes, entrando como a AT fictícia | sim (depois do `seed:demo`) |
+| `npm run test:rls` | As regras no projeto real de testes, entrando como a AT fictícia (não vê quem não atende, não muda programas, nível de ajuda nem maestria) | sim (depois do `seed:demo`) |
 | `npm run test:equipe` | Gestão de equipe: só a coordenação cria membros, troca obrigatória de senha, desativação | sim (depois do `seed:demo` e `fn:deploy`) |
 | `npm run test:fotos` | Fotos em pasta privada: só quem atende o aprendiz abre a foto | sim (depois do `seed:demo`) |
 | `npm run typecheck` | Erros de tipo no código | não |
@@ -139,6 +139,18 @@ Abra [http://localhost:5173](http://localhost:5173).
 5. **Desativar acesso** corta o acesso na hora; as sessões que a pessoa registrou continuam guardadas.
 
 Para um aprendiz aparecer para alguém, a coordenação marca essa pessoa em **Equipe** no cadastro do aprendiz.
+
+---
+
+## Como funcionam os programas
+
+- **Biblioteca** (menu Biblioteca, coordenação e supervisão): modelos de programas com objetivo, procedimento, tipo de medida (Tentativa, Frequência ou Duração), aquisição/redução, protocolo, alvos sugeridos e critério de maestria. Organize em pastas.
+- **Programa do aprendiz** (página do aprendiz → Programas → Novo programa): escolha um modelo ou crie do zero. O programa vira uma **cópia própria**: mudar o modelo depois não altera o programa do aprendiz.
+- **Alvos** ficam em quatro grupos: **Em intervenção**, **Na fila**, **Manutenção** e **Masterizados**. Toque na etiqueta colorida do nível de ajuda para mudar com um toque (vale a partir da próxima sessão).
+- **Masterizar**: o alvo vai para Masterizados ou para Manutenção (com revisão a cada N dias), e o **próximo da fila entra em intervenção sozinho**. O selo “Pronto para masterizar” aparece quando o critério é atingido, mas **quem decide é a supervisão**.
+- **Histórico**: toda mudança de nível e de fase fica registrada (quem, quando, de onde para onde).
+- **Playlists**: grupos de programas para iniciar a sessão com um toque.
+- **Níveis de ajuda** (Configurações → Níveis de ajuda, só coordenação): ordem, nomes, siglas e cores. Verde, amarelo e vermelho ficam reservados para acerto, dica e erro.
 
 ---
 

@@ -58,6 +58,17 @@ ok(!!lp.error, 'NÃO cria programa')
 const newLearner = await sb.from('learners').insert({ clinic_id: '00000000-0000-0000-0000-000000000000', full_name: 'Teste' }).select('id')
 ok(!!newLearner.error, 'NÃO cadastra aprendiz')
 
+// 3b. Vê os alvos do aprendiz dela, mas não muda nível nem masteriza.
+const myTarget = (await sb.from('targets').select('id, current_prompt_level_id').eq('status', 'intervencao').limit(1).maybeSingle()).data
+if (myTarget) {
+  const lvl = await sb.from('targets').update({ current_prompt_level_id: myTarget.current_prompt_level_id }).eq('id', myTarget.id).select('id')
+  ok((lvl.data ?? []).length === 0, 'NÃO muda o nível de ajuda de um alvo')
+  const master = await sb.rpc('set_target_status', { p_target: myTarget.id, p_status: 'masterizado' })
+  ok(Boolean(master.error), 'NÃO masteriza alvo')
+} else {
+  ok(false, 'alvo em intervenção de demonstração não encontrado')
+}
+
 // 4. Não muda o próprio perfil de acesso.
 const me = login.data.user!.id
 const promote = await sb.from('profiles').update({ role: 'coordenador' }).eq('id', me).select('id')

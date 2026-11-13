@@ -234,5 +234,76 @@ ok(ov.length === 1 && ov[0].last_session_at !== null && ov[0].sessions_count > 0
 
 ok((await q(`select make_initials('Maria (Mari) de Souza') as i`))[0].i === 'MMS', 'iniciais ignoram parênteses e conectivos')
 
+// --- Fase 3: programas ------------------------------------------------------------
+console.log('\nProgramas:')
+await as(U.sup)
+const [{ save_template: tpl }] = await q(`select save_template($1::jsonb)`, [JSON.stringify({
+  name: 'Nomeação de cores', objective: 'Nomear cores', measure_type: 'tentativa', goal: 'aquisicao', protocol: 'vbmapp',
+  mastery_min_pct: 90, mastery_sessions: 2, mastery_min_trials: 4,
+  targets: [{ name: 'Azul' }, { name: 'Vermelho' }, { name: 'Amarelo' }],
+})])
+ok((await q(`select 1 from template_targets where template_id = $1 and deleted_at is null`, [tpl])).length === 3, 'supervisão cria modelo na biblioteca com 3 alvos sugeridos')
+const tts = await q(`select id, name from template_targets where template_id = $1 order by sort_order`, [tpl])
+await q(`select save_template($1::jsonb)`, [JSON.stringify({ id: tpl, name: 'Nomeação de cores', targets: [{ id: tts[2].id, name: 'Amarelo' }, { id: tts[0].id, name: 'Azul claro' }] })])
+const tts2 = await q(`select name from template_targets where template_id = $1 and deleted_at is null order by sort_order`, [tpl])
+ok(tts2.map(t => t.name).join(',') === 'Amarelo,Azul claro', 'editar modelo reordena, renomeia e remove alvos sugeridos')
+await q(`insert into program_categories (clinic_id, name) values ($1, 'Linguagem')`, [C])
+ok(true, 'supervisão cria pasta na biblioteca')
+
+const [{ create_learner_program: np }] = await q(`select create_learner_program($1::jsonb)`, [JSON.stringify({
+  learner_id: l1.id, template_id: tpl, name: 'Nomeação de cores', measure_type: 'tentativa', goal: 'aquisicao',
+  mastery_min_pct: 90, mastery_sessions: 2, mastery_min_trials: 4,
+  targets: ['Vermelho', 'Azul', 'Verde', 'Amarelo'], start_count: 1, start_level_id: L.MOD,
+})])
+const nts = await q(`select id, name, status, queue_position, current_prompt_level_id from targets where learner_program_id = $1 order by queue_position`, [np])
+ok(nts.length === 4 && nts[0].status === 'intervencao' && nts.slice(1).every(t => t.status === 'fila'), 'cria programa do aprendiz: 1º alvo em intervenção, resto na fila')
+ok(nts.every(t => t.current_prompt_level_id === L.MOD), 'alvos começam no nível de ajuda escolhido')
+await q(`update program_templates set name = 'Cores (novo nome)' where id = $1`, [tpl])
+ok((await q(`select name from learner_programs where id = $1`, [np]))[0].name === 'Nomeação de cores', 'editar o modelo NÃO muda o programa do aprendiz (cópia própria)')
+
+const promoted = (await q(`select set_target_status($1, 'masterizado') as n`, [nts[0].id]))[0].n
+const afterMaster = await q(`select id, status, mastered_at from targets where learner_program_id = $1 order by queue_position`, [np])
+ok(afterMaster[0].status === 'masterizado' && afterMaster[0].mastered_at, 'masterizar marca o alvo como masterizado')
+ok(promoted === nts[1].id && afterMaster[1].status === 'intervencao', 'o próximo da fila entra em intervenção sozinho')
+const sh = await q(`select from_status, to_status, changed_by from target_status_history where target_id = $1 order by changed_at`, [nts[0].id])
+ok(sh.length === 2 && sh[1].to_status === 'masterizado' && sh[1].changed_by === U.sup, 'histórico registra quem masterizou')
+
+await expectError(() => q(`select set_target_status($1, 'manutencao')`, [nts[1].id]), 'manutenção exige o intervalo de revisão')
+await q(`select set_target_status($1, 'manutencao', 7)`, [nts[1].id])
+const mt = (await q(`select status, maintenance_interval_days, next_maintenance_date from targets where id = $1`, [nts[1].id]))[0]
+ok(mt.status === 'manutencao' && mt.maintenance_interval_days === 7 && mt.next_maintenance_date, 'manutenção guarda o intervalo e a próxima revisão')
+ok((await q(`select status from targets where id = $1`, [nts[2].id]))[0].status === 'intervencao', 'ir para manutenção também puxa o próximo da fila')
+
+await q(`select reorder_targets($1, $2::uuid[])`, [np, `{${nts[3].id},${nts[2].id}}`])
+ok((await q(`select queue_position from targets where id = $1`, [nts[3].id]))[0].queue_position === 1, 'reordena a fila de alvos')
+ok((await q(`select add_targets($1, $2::text[], $3) as n`, [np, '{Rosa,Roxo}', L.AFT]))[0].n === 2, 'adiciona alvos no fim da fila')
+
+const [{ save_playlist: pl }] = await q(`select save_playlist($1::jsonb)`, [JSON.stringify({ learner_id: l1.id, name: 'PDI 2026', program_ids: [np, lp.id] })])
+ok((await q(`select 1 from playlist_programs where playlist_id = $1 and deleted_at is null`, [pl])).length === 2, 'cria playlist com 2 programas')
+await q(`select save_playlist($1::jsonb)`, [JSON.stringify({ id: pl, learner_id: l1.id, name: 'PDI 2026', program_ids: [np] })])
+ok((await q(`select 1 from playlist_programs where playlist_id = $1 and deleted_at is null`, [pl])).length === 1, 'tirar programa da playlist (exclusão lógica)')
+
+const pss = await q(`select * from program_session_stats where learner_program_id = $1`, [lp.id])
+ok(pss.length >= 3 && pss.every(r => Number(r.trials_total) > 0), 'desempenho por programa e sessão disponível para os gráficos')
+
+await as(U.at2)
+await expectError(() => q(`select set_target_status($1, 'masterizado')`, [nts[2].id]), 'AT não masteriza alvo')
+await expectError(() => q(`select create_learner_program($1::jsonb)`, [JSON.stringify({ learner_id: l2.id, name: 'X' })]), 'AT não cria programa')
+await expectError(() => q(`select save_template($1::jsonb)`, [JSON.stringify({ name: 'X' })]), 'AT não edita a biblioteca')
+ok((await q(`select * from program_session_stats where learner_program_id = $1`, [lp.id])).length === 0, 'AT não vinculada não vê o desempenho do Pedro')
+
+console.log('\nNíveis de ajuda:')
+await as(U.sup)
+await expectError(() => q(`select save_prompt_levels('[]'::jsonb)`), 'supervisão não altera níveis de ajuda')
+await as(U.coord)
+const lv = await q(`select id, name, abbreviation, color, is_independent from prompt_levels where deleted_at is null order by sort_order`)
+const lvJson = lv.map(({ id, name, abbreviation, color, is_independent }) => ({ id, name, abbreviation, color, is_independent }))
+await expectError(() => q(`select save_prompt_levels($1::jsonb)`, [JSON.stringify(lvJson.map(l => ({ ...l, is_independent: false })))]), 'exige exatamente um nível Independente')
+await expectError(() => q(`select save_prompt_levels($1::jsonb)`, [JSON.stringify(lvJson.filter(l => l.abbreviation !== 'MOD'))]), 'não remove nível em uso por algum alvo')
+const reordered = [lvJson[1], lvJson[0], ...lvJson.slice(2).filter(l => l.abbreviation !== '2OP'), { name: 'Dica visual', abbreviation: 'VIS', color: '#0891b2', is_independent: false }]
+await q(`select save_prompt_levels($1::jsonb)`, [JSON.stringify(reordered)])
+const lv2 = await q(`select abbreviation from prompt_levels where deleted_at is null order by sort_order`)
+ok(lv2.map(l => l.abbreviation).join(',') === 'AFP,AFT,MOD,GES,VER,IND,VIS', 'reordena, remove nível sem uso e adiciona nível novo')
+
 console.log(`\n${pass} ok, ${fail} falhas`)
 process.exit(fail ? 1 : 0)

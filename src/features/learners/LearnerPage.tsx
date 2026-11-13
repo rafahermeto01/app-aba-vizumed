@@ -1,6 +1,6 @@
 import { ArrowLeft, Construction, Mail, Pencil, Phone, ShieldCheck } from 'lucide-react'
 import { useEffect, type ReactNode } from 'react'
-import { Link, useParams } from 'react-router'
+import { Link, useParams, useSearchParams } from 'react-router'
 
 import { PersonAvatar } from '@/components/PersonAvatar'
 import { Badge } from '@/components/ui/badge'
@@ -9,6 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { ROLE_LABEL, useAuth } from '@/features/auth/AuthProvider'
+import { ProgramsTab } from '@/features/programs/ProgramsTab'
 import { useTeam } from '@/features/team/api'
 import { maskCpf } from '@/lib/cpf'
 import { ageLabel, formatDate, formatDateOnly, formatDateTime } from '@/lib/dates'
@@ -155,6 +156,9 @@ export function LearnerPage() {
   const { profile } = useAuth()
   const learner = useLearner(id)
   const data = learner.data
+  const [params, setParams] = useSearchParams()
+  const tabs = ['programas', 'sessoes', 'desempenho', 'cadastro']
+  const tab = tabs.includes(params.get('aba') ?? '') ? params.get('aba')! : 'programas'
 
   useEffect(() => {
     if (data) document.title = `${data.initials || 'Aprendiz'} · LovABA`
@@ -220,20 +224,20 @@ export function LearnerPage() {
         )}
       </div>
 
-      <Tabs defaultValue="cadastro">
+      <Tabs value={tab} onValueChange={(v) => setParams({ aba: v }, { replace: true })}>
         <div className="-mx-4 overflow-x-auto px-4 pb-1 md:mx-0 md:px-0">
           <TabsList>
-            <TabsTrigger value="cadastro">Cadastro</TabsTrigger>
             <TabsTrigger value="programas">Programas</TabsTrigger>
             <TabsTrigger value="sessoes">Sessões</TabsTrigger>
             <TabsTrigger value="desempenho">Desempenho</TabsTrigger>
+            <TabsTrigger value="cadastro">Cadastro</TabsTrigger>
           </TabsList>
         </div>
         <TabsContent value="cadastro" className="mt-4">
           <RegistrationTab learner={data} />
         </TabsContent>
         <TabsContent value="programas" className="mt-4">
-          <Soon phase={3} text="Programas do aprendiz, alvos com fila e níveis de ajuda, e playlists." />
+          <ProgramsTab learner={data} />
         </TabsContent>
         <TabsContent value="sessoes" className="mt-4">
           <Soon phase={5} text="Lista de sessões por semana e mês, com detalhes de cada atendimento." />

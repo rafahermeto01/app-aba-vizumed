@@ -1,13 +1,12 @@
-import { Construction } from 'lucide-react'
 import { useSearchParams } from 'react-router'
 
 import { PageHeader } from '@/components/layout/PageHeader'
-import { Card, CardContent } from '@/components/ui/card'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { TeamSection } from '@/features/team/TeamSection'
 
 import { CidSection } from './CidSection'
 import { ClinicSection } from './ClinicSection'
+import { PromptLevelsSection } from './PromptLevelsSection'
 
 const TABS = ['clinica', 'equipe', 'cids', 'niveis'] as const
 type Tab = (typeof TABS)[number]
@@ -38,13 +37,7 @@ export function SettingsPage() {
           <CidSection />
         </TabsContent>
         <TabsContent value="niveis" className="mt-4">
-          <Card className="max-w-3xl">
-            <CardContent className="flex flex-col items-center gap-3 py-12 text-center">
-              <Construction className="size-10 text-muted-foreground" aria-hidden />
-              <p className="text-lg font-medium">Chega na fase 3</p>
-              <p className="max-w-md text-base text-muted-foreground">Reordenar, renomear e escolher as cores dos níveis de ajuda.</p>
-            </CardContent>
-          </Card>
+          <PromptLevelsSection />
         </TabsContent>
       </Tabs>
     </>

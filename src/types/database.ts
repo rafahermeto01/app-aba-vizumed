@@ -1545,6 +1545,60 @@ export type Database = {
           },
         ]
       }
+      program_session_stats: {
+        Row: {
+          applicator_id: string | null
+          correct_independent: number | null
+          errors: number | null
+          learner_id: string | null
+          learner_program_id: string | null
+          occurrences: number | null
+          pct_independent: number | null
+          prompted: number | null
+          session_id: string | null
+          session_status: Database["public"]["Enums"]["session_status"] | null
+          started_at: string | null
+          trials_total: number | null
+          value_total: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sessions_applicator_id_fkey"
+            columns: ["applicator_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "targets_learner_program_id_fkey"
+            columns: ["learner_program_id"]
+            isOneToOne: false
+            referencedRelation: "learner_programs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "trials_learner_id_fkey"
+            columns: ["learner_id"]
+            isOneToOne: false
+            referencedRelation: "learner_overview"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "trials_learner_id_fkey"
+            columns: ["learner_id"]
+            isOneToOne: false
+            referencedRelation: "learners"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "trials_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       session_target_stats: {
         Row: {
           correct_independent: number | null
@@ -1637,11 +1691,17 @@ export type Database = {
       }
     }
     Functions: {
+      add_targets: {
+        Args: { p_level?: string; p_names: string[]; p_program: string }
+        Returns: number
+      }
       can_manage: { Args: { p_learner: string }; Returns: boolean }
       can_see: { Args: { p_learner: string }; Returns: boolean }
       can_see_session: { Args: { p_session: string }; Returns: boolean }
       can_write_session: { Args: { p_session: string }; Returns: boolean }
       complete_password_change: { Args: never; Returns: boolean }
+      create_learner_program: { Args: { p: Json }; Returns: string }
+      first_prompt_level: { Args: { p_clinic: string }; Returns: string }
       is_on_team: { Args: { p_learner: string }; Returns: boolean }
       is_valid_cpf: { Args: { p_cpf: string }; Returns: boolean }
       lgpd_consent_text: { Args: never; Returns: string }
@@ -1655,7 +1715,26 @@ export type Database = {
         Args: never
         Returns: Database["public"]["Enums"]["user_role"]
       }
+      reorder_programs: {
+        Args: { p_ids: string[]; p_learner: string }
+        Returns: undefined
+      }
+      reorder_targets: {
+        Args: { p_ids: string[]; p_program: string }
+        Returns: undefined
+      }
       save_learner: { Args: { p: Json }; Returns: string }
+      save_playlist: { Args: { p: Json }; Returns: string }
+      save_prompt_levels: { Args: { p: Json }; Returns: undefined }
+      save_template: { Args: { p: Json }; Returns: string }
+      set_target_status: {
+        Args: {
+          p_interval_days?: number
+          p_status: Database["public"]["Enums"]["target_status"]
+          p_target: string
+        }
+        Returns: string
+      }
       try_uuid: { Args: { p: string }; Returns: string }
     }
     Enums: {
