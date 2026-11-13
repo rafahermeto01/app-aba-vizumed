@@ -305,5 +305,37 @@ await q(`select save_prompt_levels($1::jsonb)`, [JSON.stringify(reordered)])
 const lv2 = await q(`select abbreviation from prompt_levels where deleted_at is null order by sort_order`)
 ok(lv2.map(l => l.abbreviation).join(',') === 'AFP,AFT,MOD,GES,VER,IND,VIS', 'reordena, remove nível sem uso e adiciona nível novo')
 
+// --- Fase 5: evolução ---------------------------------------------------------------
+console.log('\nEvolução:')
+await as(U.sup)
+const [ev] = await q(`insert into sessions (client_id, clinic_id, learner_id, applicator_id, notes) values (gen_random_uuid(),$1,$2,$3,'Sessão de evolução') returning id`, [C, l1.id, U.sup])
+const evTrials = [['acerto', L.AFP], ['acerto', L.AFP], ['dica', L.AFP], ['erro', L.MOD]]
+for (const [r, lvl] of evTrials) {
+  await q(`insert into trials (client_id, clinic_id, session_id, target_id, learner_id, result, prompt_level_id, help_level_id) values (gen_random_uuid(),$1,$2,$3,$4,$5,$6,$7)`,
+    [C, ev.id, tg.id, l1.id, r, lvl, r === 'dica' ? L.AFP : null])
+}
+await q(`update sessions set status = 'finalizada', ended_at = now(), duration_seconds = 1800 where id = $1`, [ev.id])
+const [evStat] = await q(`select prompt_level_id, trials_total, pct_independent from session_target_stats where session_id = $1 and target_id = $2`, [ev.id, tg.id])
+ok(evStat.prompt_level_id === L.AFP, 'gráfico: nível de ajuda vigente na sessão = o mais usado (AFP)')
+ok(Number(evStat.trials_total) === 4 && Number(evStat.pct_independent) === 50, 'gráfico: 50% independente com 4 tentativas')
+const [ov2] = await q(`select programs_count, targets_count, trials_total, correct_independent, notes from session_overview where id = $1`, [ev.id])
+ok(ov2.targets_count === 1 && ov2.trials_total === 4 && ov2.correct_independent === 2, 'lista de sessões: alvos, tentativas e acertos por sessão')
+
+await as(U.at2)
+ok((await q(`select id from session_overview where id = $1`, [ev.id])).length === 0, 'AT não vinculada não vê a sessão na lista')
+
+console.log('\nCorreção de sessão finalizada:')
+await as(U.sup)
+const [wrong] = await q(`select id from trials where session_id = $1 and result = 'erro'`, [ev.id])
+ok((await q(`update trials set result = 'acerto' where id = $1 returning id`, [wrong.id])).length === 1, 'supervisão corrige uma tentativa de sessão finalizada')
+ok((await q(`update sessions set rating = 5 where id = $1 returning id`, [ev.id])).length === 1, 'supervisão corrige a avaliação')
+const audits = await q(`select table_name, changed_by, old_data->>'result' as antes, new_data->>'result' as depois from session_audit where session_id = $1 order by changed_at`, [ev.id])
+ok(audits.some(a => a.table_name === 'trials' && a.antes === 'erro' && a.depois === 'acerto' && a.changed_by === U.sup), 'a correção fica na auditoria (quem, o que era, o que ficou)')
+ok(audits.some(a => a.table_name === 'sessions'), 'a mudança na sessão também fica na auditoria')
+await expectError(() => q(`update sessions set deleted_at = now() where id = $1`, [ev.id]), 'supervisão NÃO exclui sessão')
+await as(U.coord)
+await q(`update sessions set deleted_at = now() where id = $1`, [ev.id])
+ok((await q(`select id from session_overview where id = $1`, [ev.id])).length === 0, 'coordenação exclui (exclusão lógica) e a sessão some da lista')
+
 console.log(`\n${pass} ok, ${fail} falhas`)
 process.exit(fail ? 1 : 0)

@@ -4,6 +4,8 @@ import { CalendarClock, Sparkles, Users } from 'lucide-react'
 import { PageHeader } from '@/components/layout/PageHeader'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { useAuth } from '@/features/auth/AuthProvider'
+
+import { MaintenanceDueCard, ReadyToMasterCard, useReadyToMaster } from './HomeLists'
 import { formatDateTime, greeting, timeAgo } from '@/lib/dates'
 import { supabase } from '@/lib/supabase'
 
@@ -29,6 +31,8 @@ export function HomePage() {
     },
   })
 
+  const manages = profile?.role !== 'aplicador'
+  const ready = useReadyToMaster(Boolean(profile) && manages)
   const firstName = profile?.full_name.split(' ')[0] ?? ''
 
   return (
@@ -65,11 +69,16 @@ export function HomePage() {
               <CardDescription className="flex items-center gap-2 text-base">
                 <Sparkles className="size-5" aria-hidden /> Prontos para masterizar
               </CardDescription>
-              <CardTitle className="text-2xl">Em breve</CardTitle>
-              <p className="text-sm text-muted-foreground">Disponível na fase 5 (Evolução).</p>
+              <CardTitle className="text-4xl">{ready.isPending ? '…' : (ready.data?.length ?? '—')}</CardTitle>
+              <p className="text-sm text-muted-foreground">alvos atingiram o critério</p>
             </CardHeader>
           </Card>
         )}
+      </div>
+
+      <div className="mt-6 grid gap-4 lg:grid-cols-2">
+        {manages && <ReadyToMasterCard />}
+        <MaintenanceDueCard />
       </div>
 
       {stats.isError && (

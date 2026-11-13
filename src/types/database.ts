@@ -924,6 +924,13 @@ export type Database = {
             foreignKeyName: "session_audit_session_id_fkey"
             columns: ["session_id"]
             isOneToOne: false
+            referencedRelation: "session_overview"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "session_audit_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
             referencedRelation: "sessions"
             referencedColumns: ["id"]
           },
@@ -976,6 +983,13 @@ export type Database = {
             columns: ["learner_program_id"]
             isOneToOne: false
             referencedRelation: "learner_programs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "session_programs_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "session_overview"
             referencedColumns: ["id"]
           },
           {
@@ -1501,6 +1515,13 @@ export type Database = {
             foreignKeyName: "trials_session_id_fkey"
             columns: ["session_id"]
             isOneToOne: false
+            referencedRelation: "session_overview"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "trials_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
             referencedRelation: "sessions"
             referencedColumns: ["id"]
           },
@@ -1594,7 +1615,66 @@ export type Database = {
             foreignKeyName: "trials_session_id_fkey"
             columns: ["session_id"]
             isOneToOne: false
+            referencedRelation: "session_overview"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "trials_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
             referencedRelation: "sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      session_overview: {
+        Row: {
+          applicator_id: string | null
+          applicator_signature_path: string | null
+          clinic_id: string | null
+          correct_independent: number | null
+          duration_seconds: number | null
+          ended_at: string | null
+          id: string | null
+          learner_id: string | null
+          notes: string | null
+          number: number | null
+          occurrences: number | null
+          programs_count: number | null
+          prompted: number | null
+          rating: number | null
+          started_at: string | null
+          status: Database["public"]["Enums"]["session_status"] | null
+          targets_count: number | null
+          trials_total: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sessions_applicator_id_fkey"
+            columns: ["applicator_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sessions_clinic_id_fkey"
+            columns: ["clinic_id"]
+            isOneToOne: false
+            referencedRelation: "clinics"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sessions_learner_id_fkey"
+            columns: ["learner_id"]
+            isOneToOne: false
+            referencedRelation: "learner_overview"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sessions_learner_id_fkey"
+            columns: ["learner_id"]
+            isOneToOne: false
+            referencedRelation: "learners"
             referencedColumns: ["id"]
           },
         ]
@@ -1607,6 +1687,7 @@ export type Database = {
           occurrences: number | null
           pct_independent: number | null
           pct_total: number | null
+          prompt_level_id: string | null
           prompted: number | null
           session_id: string | null
           session_status: Database["public"]["Enums"]["session_status"] | null
@@ -1628,6 +1709,13 @@ export type Database = {
             columns: ["learner_id"]
             isOneToOne: false
             referencedRelation: "learners"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "trials_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "session_overview"
             referencedColumns: ["id"]
           },
           {

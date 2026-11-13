@@ -75,6 +75,12 @@ try {
   // Fecha alguma sessão de teste antiga deste aparelho (não deve haver: navegador novo)
   step('Abrindo a sessão do Pedro')
   await page.goto(`${BASE}/aprendizes/${pedro.id}/sessao/nova`)
+  // Marca exatamente os programas usados no teste (não depende da última sessão)
+  await page.getByRole('tab', { name: 'Todos' }).click()
+  for (const name of ['Imitação motora grossa', 'Redução de fugas da mesa']) {
+    const box = page.getByRole('checkbox', { name: new RegExp(name) })
+    if (!(await box.isChecked())) await box.click()
+  }
   await page.getByRole('button', { name: /Ver resumo/ }).click()
   await page.getByRole('button', { name: 'Registrar', exact: true }).click()
   await page.waitForURL(/\/sessao\/[0-9a-f-]{36}$/)
@@ -151,7 +157,7 @@ try {
   step('Abrindo o app JÁ SEM INTERNET e começando uma sessão da Laura (baixada em segundo plano)')
   await context.setOffline(true)
   await page.goto(`${BASE}/`)
-  await page.getByText(/Boa (noite|tarde|dia)/).first().waitFor({ timeout: 15000 })
+  await page.getByText(/(Bom dia|Boa tarde|Boa noite),/).first().waitFor({ timeout: 15000 })
   ok(true, 'o app abriu sem internet')
   await page.goto(`${BASE}/aprendizes/${laura.id}/sessao/nova`)
   await page.getByRole('button', { name: /Ver resumo/ }).click()

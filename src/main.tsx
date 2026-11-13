@@ -51,7 +51,7 @@ createRoot(document.getElementById('root')!).render(
         persistOptions={{
           persister: queryPersister,
           maxAge: 7 * DAY,
-          buster: 'lovaba-v1',
+          buster: 'lovaba-v2',
           dehydrateOptions: { shouldDehydrateQuery: shouldPersistQuery },
         }}
       >

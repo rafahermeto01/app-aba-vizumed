@@ -151,6 +151,8 @@ export function useProgram(programId: string | undefined) {
 
 export type TargetSessionStat = {
   target_id: string
+  /** nível de ajuda vigente naquela sessão */
+  prompt_level_id: string | null
   session_id: string
   started_at: string
   session_status: string
@@ -169,12 +171,13 @@ export function useTargetStats(targetIds: string[]) {
     queryFn: async (): Promise<TargetSessionStat[]> => {
       const { data, error } = await supabase
         .from('session_target_stats')
-        .select('target_id, session_id, started_at, session_status, trials_total, correct_independent, pct_independent, occurrences, value_total')
+        .select('target_id, session_id, started_at, session_status, trials_total, correct_independent, pct_independent, occurrences, value_total, prompt_level_id')
         .in('target_id', targetIds)
         .order('started_at', { ascending: false })
       if (error) throw error
       return data.map((r) => ({
         target_id: r.target_id!,
+        prompt_level_id: r.prompt_level_id ?? null,
         session_id: r.session_id!,
         started_at: r.started_at!,
         session_status: r.session_status!,
@@ -199,8 +202,10 @@ export function useMastery(programId: string | undefined) {
         .select('target_id, ready_to_master, sessions_meeting, sessions_considered')
         .eq('learner_program_id', programId!)
       if (error) throw error
-      return new Map(data.map((m) => [m.target_id!, m]))
+      // Guarda uma lista simples (a cópia no aparelho só aceita dados simples)
+      return data
     },
+    select: (data) => new Map(data.map((m) => [m.target_id!, m])),
   })
 }
 
@@ -263,6 +268,8 @@ function useInvalidateProgram() {
       queryClient.invalidateQueries({ queryKey: ['learner-programs', learnerId] }),
       programId ? queryClient.invalidateQueries({ queryKey: ['program', programId] }) : null,
       queryClient.invalidateQueries({ queryKey: ['mastery'] }),
+      queryClient.invalidateQueries({ queryKey: ['ready-to-master'] }),
+      queryClient.invalidateQueries({ queryKey: ['maintenance-due'] }),
       queryClient.invalidateQueries({ queryKey: ['program-history'] }),
       queryClient.invalidateQueries({ queryKey: ['playlists', learnerId] }),
     ])

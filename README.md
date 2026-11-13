@@ -13,7 +13,7 @@ Web app para clínicas de terapia ABA: cadastro de aprendizes, programas de ensi
 | 2. Equipe e aprendizes | Equipe (cadastrar, editar, redefinir senha, desativar), Meu perfil, aprendizes (lista, cadastro, página), responsáveis, CIDs, equipe vinculada, consentimento LGPD, dados da clínica | ✅ pronta |
 | 3. Programas | Níveis de ajuda (ordem, nomes, cores), biblioteca com pastas e filtros, programas do aprendiz (da biblioteca ou do zero), alvos com fila e fases, masterizar/manutenção, playlists, histórico de mudanças | ✅ pronta |
 | 4. Coleta offline | Os 6 passos da coleta, cada toque salvo no aparelho, fila de sincronização sem duplicar, retomar sessão, assinatura, resumo, app abre sem internet | ✅ pronta |
-| 5. Evolução | Gráficos, sessões, maestria | ⏳ |
+| 5. Evolução | Aba Desempenho (período, números, gráfico Aquisição/Redução), gráfico por alvo colorido pelo nível de ajuda, lista de sessões agrupada com filtros, detalhe da sessão com correções auditadas, prontos para masterizar e revisões de manutenção na tela inicial | ✅ pronta |
 | 6. Acabamento | PWA instalável, revisão final, deploy | ⏳ |
 
 ---
@@ -168,6 +168,16 @@ Para um aprendiz aparecer para alguém, a coordenação marca essa pessoa em **E
 - Ao tentar **Sair** da conta com registros ainda não enviados, o app avisa.
 
 **Abrir sem internet:** depois do primeiro acesso com internet, o app fica guardado no aparelho e baixa sozinho os aprendizes e programas de quem está logado. Para instalar no celular como aplicativo (ícone na tela inicial), o app precisa estar publicado com HTTPS (fase 6).
+
+---
+
+## Evolução (gráficos e sessões)
+
+- **Desempenho** (página do aprendiz): escolha o período (padrão: últimos 30 dias). Mostra sessões realizadas, programas concluídos, alvos masterizados e o % de acerto independente, sempre com o número de tentativas. Em **Aquisição**, o gráfico de % por sessão; em **Redução**, um gráfico por programa (ocorrências por sessão, com a média por hora ao tocar na barra).
+- **Gráfico por alvo** (programa → aba **Evolução**): % de acerto independente por sessão com o **fundo colorido pelo nível de ajuda** daquela sessão (a sigla aparece escrita em cada faixa), **linhas tracejadas onde o nível mudou** e a linha do critério de maestria. Mostra também quantas tentativas foram feitas em cada nível.
+- **Sessões** (página do aprendiz): agrupadas em “Nesta semana”, “Semana passada” e por mês, com filtros de período, aplicador e situação. Toque numa sessão para ver tudo: tentativas, ajuda usada nas DICAs, notas, avaliação e assinatura.
+- **Correções**: supervisão vinculada e coordenação podem corrigir uma sessão finalizada (notas, avaliação, resultado de uma tentativa, remover/restaurar tentativa). Cada correção fica registrada (quem, quando, de quê para quê) na própria sessão. Só a coordenação exclui uma sessão (exclusão lógica).
+- **Tela inicial**: **Prontos para masterizar** (supervisão e coordenação; o sistema só sugere) e **Revisões de manutenção** do dia.
 
 ---
 

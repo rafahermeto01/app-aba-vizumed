@@ -16,7 +16,7 @@ import {
   Wrench,
 } from 'lucide-react'
 import { useEffect, useMemo, useState, type ReactNode } from 'react'
-import { Link, useNavigate, useParams } from 'react-router'
+import { Link, useNavigate, useParams, useSearchParams } from 'react-router'
 import { toast } from 'sonner'
 
 import { RichTextView } from '@/components/RichText'
@@ -45,6 +45,7 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Textarea } from '@/components/ui/textarea'
 import { useAuth } from '@/features/auth/AuthProvider'
+import { ProgramEvolution } from '@/features/evolution/ProgramEvolution'
 import { useLearner } from '@/features/learners/api'
 import { useTeam } from '@/features/team/api'
 import { formatDate, formatDateOnly, formatDateTime } from '@/lib/dates'
@@ -118,7 +119,9 @@ export function ProgramPage() {
   const [removing, setRemoving] = useState<Target | null>(null)
   const [removingProgram, setRemovingProgram] = useState(false)
   const [newTargets, setNewTargets] = useState('')
-  const [tab, setTab] = useState('alvos')
+  const [params, setParams] = useSearchParams()
+  const tab = ['alvos', 'evolucao', 'sobre', 'historico'].includes(params.get('aba') ?? '') ? params.get('aba')! : 'alvos'
+  const setTab = (v: string) => setParams({ aba: v }, { replace: true })
   const [historyFilter, setHistoryFilter] = useState<string | null>(null)
 
   useEffect(() => {
@@ -268,6 +271,7 @@ export function ProgramPage() {
         <div className="-mx-4 overflow-x-auto px-4 pb-1 md:mx-0 md:px-0">
           <TabsList>
             <TabsTrigger value="alvos">Alvos ({data.targets.length})</TabsTrigger>
+            <TabsTrigger value="evolucao">Evolução</TabsTrigger>
             <TabsTrigger value="sobre">Sobre</TabsTrigger>
             <TabsTrigger value="historico">Histórico</TabsTrigger>
           </TabsList>
@@ -434,6 +438,11 @@ export function ProgramPage() {
               </CardContent>
             </Card>
           )}
+        </TabsContent>
+
+        {/* EVOLUÇÃO */}
+        <TabsContent value="evolucao" className="mt-4">
+          <ProgramEvolution program={data} />
         </TabsContent>
 
         {/* SOBRE */}

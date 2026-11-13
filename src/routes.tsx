@@ -1,6 +1,7 @@
 import { createBrowserRouter, Navigate } from 'react-router'
 
 import { AppLayout } from '@/components/layout/AppLayout'
+import { RouteError } from '@/components/RouteError'
 import { ChangePasswordPage } from '@/features/auth/ChangePasswordPage'
 import { CollectPage } from '@/features/collection/CollectPage'
 import { FinalizePage } from '@/features/collection/FinalizePage'
@@ -11,6 +12,7 @@ import { LoginPage } from '@/features/auth/LoginPage'
 import { RequireAuth } from '@/features/auth/RequireAuth'
 import { ResetPasswordPage } from '@/features/auth/ResetPasswordPage'
 import { HomePage } from '@/features/home/HomePage'
+import { SessionDetailPage } from '@/features/evolution/SessionDetailPage'
 import { LearnerFormPage } from '@/features/learners/LearnerFormPage'
 import { LearnerPage } from '@/features/learners/LearnerPage'
 import { LearnersPage } from '@/features/learners/LearnersPage'
@@ -22,6 +24,9 @@ import { ProfilePage } from '@/features/profile/ProfilePage'
 import { SettingsPage } from '@/features/settings/SettingsPage'
 
 export const router = createBrowserRouter([
+  {
+    errorElement: <RouteError />,
+    children: [
   // Telas públicas (não existe "criar conta")
   { path: '/login', element: <LoginPage /> },
   { path: '/esqueci-senha', element: <ForgotPasswordPage /> },
@@ -63,6 +68,7 @@ export const router = createBrowserRouter([
           </RequireAuth>
         ),
       },
+      { path: 'aprendizes/:id/sessoes/:sessionId', element: <SessionDetailPage /> },
       { path: 'aprendizes/:id/programas/novo', element: <NewProgramPage /> },
       { path: 'aprendizes/:id/programas/:programId', element: <ProgramPage /> },
       { path: 'aprendizes/:id/programas/:programId/editar', element: <EditProgramPage /> },
@@ -86,4 +92,6 @@ export const router = createBrowserRouter([
     ],
   },
   { path: '*', element: <Navigate to="/" replace /> },
+    ],
+  },
 ])

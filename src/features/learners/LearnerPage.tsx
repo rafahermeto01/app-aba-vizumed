@@ -1,4 +1,4 @@
-import { ArrowLeft, Construction, Mail, Pencil, Phone, ShieldCheck } from 'lucide-react'
+import { ArrowLeft, Mail, Pencil, Phone, ShieldCheck } from 'lucide-react'
 import { useEffect, type ReactNode } from 'react'
 import { Link, useParams, useSearchParams } from 'react-router'
 
@@ -10,6 +10,7 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { ROLE_LABEL, useAuth } from '@/features/auth/AuthProvider'
 import { SessionsTab } from '@/features/collection/SessionsTab'
+import { PerformanceTab } from '@/features/evolution/PerformanceTab'
 import { ProgramsTab } from '@/features/programs/ProgramsTab'
 import { useTeam } from '@/features/team/api'
 import { maskCpf } from '@/lib/cpf'
@@ -23,18 +24,6 @@ function Info({ label, children }: { label: string; children: ReactNode }) {
       <dt className="text-sm text-muted-foreground">{label}</dt>
       <dd className="text-base">{children}</dd>
     </div>
-  )
-}
-
-function Soon({ phase, text }: { phase: number; text: string }) {
-  return (
-    <Card>
-      <CardContent className="flex flex-col items-center gap-3 py-12 text-center">
-        <Construction className="size-10 text-muted-foreground" aria-hidden />
-        <p className="text-lg font-medium">Chega na fase {phase}</p>
-        <p className="max-w-md text-base text-muted-foreground">{text}</p>
-      </CardContent>
-    </Card>
   )
 }
 
@@ -244,7 +233,7 @@ export function LearnerPage() {
           <SessionsTab learner={data} />
         </TabsContent>
         <TabsContent value="desempenho" className="mt-4">
-          <Soon phase={5} text="Gráficos de evolução, programas concluídos e alvos masterizados." />
+          <PerformanceTab learner={data} />
         </TabsContent>
       </Tabs>
     </>
