@@ -9,6 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { ROLE_LABEL, useAuth } from '@/features/auth/AuthProvider'
+import { SessionsTab } from '@/features/collection/SessionsTab'
 import { ProgramsTab } from '@/features/programs/ProgramsTab'
 import { useTeam } from '@/features/team/api'
 import { maskCpf } from '@/lib/cpf'
@@ -240,7 +241,7 @@ export function LearnerPage() {
           <ProgramsTab learner={data} />
         </TabsContent>
         <TabsContent value="sessoes" className="mt-4">
-          <Soon phase={5} text="Lista de sessões por semana e mês, com detalhes de cada atendimento." />
+          <SessionsTab learner={data} />
         </TabsContent>
         <TabsContent value="desempenho" className="mt-4">
           <Soon phase={5} text="Gráficos de evolução, programas concluídos e alvos masterizados." />

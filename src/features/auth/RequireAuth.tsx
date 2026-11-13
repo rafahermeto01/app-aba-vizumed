@@ -23,12 +23,22 @@ export function FullScreenLoader() {
  *  - papel sem permissão → volta ao início
  */
 export function RequireAuth({ children, roles }: { children: ReactNode; roles?: UserRole[] }) {
-  const { session, profile, loading, recovering, signOut } = useAuth()
+  const { session, profile, loading, recovering, signOut, profileError, retryProfile } = useAuth()
   const location = useLocation()
 
   if (loading) return <FullScreenLoader />
   if (!session) return <Navigate to="/login" replace state={{ from: location.pathname }} />
   if (recovering) return <Navigate to="/redefinir-senha" replace />
+
+  if (!profile && profileError) {
+    return (
+      <AuthCard title="Sem conexão" description="Não foi possível carregar seus dados agora. Verifique a internet e tente de novo.">
+        <Button size="lg" className="w-full" onClick={retryProfile}>
+          Tentar de novo
+        </Button>
+      </AuthCard>
+    )
+  }
 
   if (!profile || !profile.active) {
     return (

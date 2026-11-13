@@ -2,6 +2,10 @@ import { createBrowserRouter, Navigate } from 'react-router'
 
 import { AppLayout } from '@/components/layout/AppLayout'
 import { ChangePasswordPage } from '@/features/auth/ChangePasswordPage'
+import { CollectPage } from '@/features/collection/CollectPage'
+import { FinalizePage } from '@/features/collection/FinalizePage'
+import { NewSessionPage } from '@/features/collection/NewSessionPage'
+import { SummaryPage } from '@/features/collection/SummaryPage'
 import { ForgotPasswordPage } from '@/features/auth/ForgotPasswordPage'
 import { LoginPage } from '@/features/auth/LoginPage'
 import { RequireAuth } from '@/features/auth/RequireAuth'
@@ -23,6 +27,14 @@ export const router = createBrowserRouter([
   { path: '/esqueci-senha', element: <ForgotPasswordPage /> },
   { path: '/redefinir-senha', element: <ResetPasswordPage /> },
   { path: '/trocar-senha', element: <ChangePasswordPage /> },
+
+  // Coleta: tela cheia, sem o menu (menos toques acidentais durante o atendimento)
+  ...[
+    ['aprendizes/:id/sessao/nova', <NewSessionPage />],
+    ['sessao/:sessionId', <CollectPage />],
+    ['sessao/:sessionId/finalizar', <FinalizePage />],
+    ['sessao/:sessionId/resumo', <SummaryPage />],
+  ].map(([path, page]) => ({ path: `/${path as string}`, element: <RequireAuth>{page}</RequireAuth> })),
 
   // Telas internas
   {

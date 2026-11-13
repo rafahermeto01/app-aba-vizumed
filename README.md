@@ -12,7 +12,7 @@ Web app para clínicas de terapia ABA: cadastro de aprendizes, programas de ensi
 | 1. Fundação | Projeto, banco completo + RLS, dados fictícios, primeiro Coordenador, login, troca obrigatória de senha, layout | ✅ pronta |
 | 2. Equipe e aprendizes | Equipe (cadastrar, editar, redefinir senha, desativar), Meu perfil, aprendizes (lista, cadastro, página), responsáveis, CIDs, equipe vinculada, consentimento LGPD, dados da clínica | ✅ pronta |
 | 3. Programas | Níveis de ajuda (ordem, nomes, cores), biblioteca com pastas e filtros, programas do aprendiz (da biblioteca ou do zero), alvos com fila e fases, masterizar/manutenção, playlists, histórico de mudanças | ✅ pronta |
-| 4. Coleta offline | Os 6 passos da coleta, fila de sincronização, assinatura | ⏳ |
+| 4. Coleta offline | Os 6 passos da coleta, cada toque salvo no aparelho, fila de sincronização sem duplicar, retomar sessão, assinatura, resumo, app abre sem internet | ✅ pronta |
 | 5. Evolução | Gráficos, sessões, maestria | ⏳ |
 | 6. Acabamento | PWA instalável, revisão final, deploy | ⏳ |
 
@@ -121,11 +121,12 @@ Abra [http://localhost:5173](http://localhost:5173).
 
 | Comando | O que verifica | Precisa do Supabase? |
 |---|---|---|
-| `npm test` | Cálculos, CPF, iniciais, datas | não |
+| `npm test` | Cálculos, CPF, iniciais, datas, e a fila de sincronização (offline, recarregar, reenviar sem duplicar, ordem de envio) | não |
 | `npm run test:db` | Todas as regras de segurança, num banco temporário no seu computador | não |
 | `npm run test:rls` | As regras no projeto real de testes, entrando como a AT fictícia (não vê quem não atende, não muda programas, nível de ajuda nem maestria) | sim (depois do `seed:demo`) |
 | `npm run test:equipe` | Gestão de equipe: só a coordenação cria membros, troca obrigatória de senha, desativação | sim (depois do `seed:demo` e `fn:deploy`) |
 | `npm run test:fotos` | Fotos em pasta privada: só quem atende o aprendiz abre a foto | sim (depois do `seed:demo`) |
+| `npm run test:offline` | **Coleta sem internet num Chrome de verdade**: registra offline, recarrega a página, finaliza, volta a internet e confere no banco que tudo chegou sem duplicar | sim (depois do `seed:demo`; usa o Chrome instalado) |
 | `npm run typecheck` | Erros de tipo no código | não |
 
 ---
@@ -151,6 +152,22 @@ Para um aprendiz aparecer para alguém, a coordenação marca essa pessoa em **E
 - **Histórico**: toda mudança de nível e de fase fica registrada (quem, quando, de onde para onde).
 - **Playlists**: grupos de programas para iniciar a sessão com um toque.
 - **Níveis de ajuda** (Configurações → Níveis de ajuda, só coordenação): ordem, nomes, siglas e cores. Verde, amarelo e vermelho ficam reservados para acerto, dica e erro.
+
+---
+
+## Coleta (sessão) e funcionamento sem internet
+
+**Como registrar:** página do aprendiz → aba **Sessões** → botão **Registrar sessão** → escolha os programas (os da última sessão já vêm marcados; também dá para usar uma **playlist**) → **Ver resumo** → **Registrar** (o cronômetro começa) → toque **−**, **DICA** ou **+** em cada alvo → **Finalizar** (checklist, avaliação, notas e assinatura) → resumo da sessão.
+
+**Nenhum dado se perde:**
+- Cada toque é salvo **primeiro no aparelho** e entra numa fila. Depois vai para o servidor, sozinho, quando houver internet (ao voltar a conexão, ao reabrir o app e a cada 5 segundos com pendências).
+- No topo da coleta: **Salvo** (verde, tudo no servidor), **Salvo no aparelho, sincronizando…** (amarelo) ou **Sem internet, salvo no aparelho** (cinza).
+- Reenviar nunca duplica (cada registro tem um código único gerado no aparelho).
+- Se o navegador fechar ou a bateria acabar, ao abrir o app aparece **Sessão em andamento → Continuar**, exatamente de onde parou.
+- **Desfazer** não apaga: marca o toque como desfeito (ele some da conta, mas fica rastreável).
+- Ao tentar **Sair** da conta com registros ainda não enviados, o app avisa.
+
+**Abrir sem internet:** depois do primeiro acesso com internet, o app fica guardado no aparelho e baixa sozinho os aprendizes e programas de quem está logado. Para instalar no celular como aplicativo (ícone na tela inicial), o app precisa estar publicado com HTTPS (fase 6).
 
 ---
 
@@ -185,5 +202,5 @@ docs/        especificação e arquitetura
 scripts/     scripts locais (primeiro admin, dados fictícios, testes no projeto real)
 supabase/    migrations do banco (tabelas, RLS, storage, views) e a função admin-users
 src/         o app (features/ por área, components/, lib/)
-tests/       testes (unit/ e db/)
+tests/       testes (unit/, db/ e e2e/ — o teste da coleta sem internet)
 ```

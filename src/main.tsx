@@ -1,6 +1,7 @@
 import '@/index.css'
 
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { QueryClient } from '@tanstack/react-query'
+import { PersistQueryClientProvider } from '@tanstack/react-query-persist-client'
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import { RouterProvider } from 'react-router'
@@ -8,11 +9,23 @@ import { RouterProvider } from 'react-router'
 import { Toaster } from '@/components/ui/sonner'
 import { AuthProvider } from '@/features/auth/AuthProvider'
 import { isSupabaseConfigured } from '@/lib/supabase'
+import { startSyncLoop } from '@/offline'
+import { queryPersister, shouldPersistQuery } from '@/offline/queryPersist'
 import { router } from '@/routes'
+
+const DAY = 24 * 60 * 60 * 1000
 
 const queryClient = new QueryClient({
   defaultOptions: {
-    queries: { retry: 1, refetchOnWindowFocus: false },
+    queries: {
+      retry: 1,
+      refetchOnWindowFocus: false,
+      // mantém os dados por uma semana para funcionar sem internet
+      gcTime: 7 * DAY,
+      // sem internet: mostra o que já está guardado no aparelho
+      networkMode: 'offlineFirst',
+    },
+    mutations: { networkMode: 'always' },
   },
 })
 
@@ -28,15 +41,25 @@ function MissingConfig() {
   )
 }
 
+if (isSupabaseConfigured) startSyncLoop()
+
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     {isSupabaseConfigured ? (
-      <QueryClientProvider client={queryClient}>
+      <PersistQueryClientProvider
+        client={queryClient}
+        persistOptions={{
+          persister: queryPersister,
+          maxAge: 7 * DAY,
+          buster: 'lovaba-v1',
+          dehydrateOptions: { shouldDehydrateQuery: shouldPersistQuery },
+        }}
+      >
         <AuthProvider>
           <RouterProvider router={router} />
           <Toaster theme="light" position="top-center" richColors={false} />
         </AuthProvider>
-      </QueryClientProvider>
+      </PersistQueryClientProvider>
     ) : (
       <MissingConfig />
     )}

@@ -1,9 +1,20 @@
 import { LogOut, UserRound } from 'lucide-react'
+import { useState } from 'react'
 import { NavLink, Outlet, useNavigate } from 'react-router'
 
 import { Logo } from '@/components/brand/Logo'
 import { PersonAvatar } from '@/components/PersonAvatar'
 import { Button } from '@/components/ui/button'
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -13,7 +24,11 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { ROLE_LABEL, useAuth } from '@/features/auth/AuthProvider'
+import { useOfflinePrefetch } from '@/features/collection/api'
+import { OpenSessionBanner } from '@/features/collection/OpenSessionBanner'
 import { useClinic } from '@/features/settings/useClinic'
+import { pendingCount } from '@/offline'
+import { SyncIndicator } from '@/offline/SyncIndicator'
 import { cn } from '@/lib/utils'
 
 import { navFor } from './nav'
@@ -21,8 +36,17 @@ import { navFor } from './nav'
 function UserMenu({ compact = false }: { compact?: boolean }) {
   const { profile, signOut } = useAuth()
   const navigate = useNavigate()
+  const [pendingToLeave, setPendingToLeave] = useState<number | null>(null)
   if (!profile) return null
+
+  async function trySignOut() {
+    // Registros que ainda não chegaram ao servidor só podem ser enviados por quem os fez
+    const n = await pendingCount(profile!.id)
+    if (n > 0) setPendingToLeave(n)
+    else await signOut()
+  }
   return (
+    <>
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <Button variant="ghost" className={cn('h-auto gap-3 px-2 py-2', compact ? '' : 'w-full justify-start')} aria-label="Menu da conta">
@@ -44,11 +68,27 @@ function UserMenu({ compact = false }: { compact?: boolean }) {
         <DropdownMenuItem onSelect={() => navigate('/perfil')} className="text-base md:text-sm">
           <UserRound aria-hidden /> Meu perfil
         </DropdownMenuItem>
-        <DropdownMenuItem onSelect={() => void signOut()} className="text-base md:text-sm">
+        <DropdownMenuItem onSelect={() => void trySignOut()} className="text-base md:text-sm">
           <LogOut aria-hidden /> Sair
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
+    <AlertDialog open={pendingToLeave !== null} onOpenChange={(o) => !o && setPendingToLeave(null)}>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>Ainda há registros para enviar</AlertDialogTitle>
+          <AlertDialogDescription className="text-base">
+            {pendingToLeave} registro(s) da coleta ainda estão só neste aparelho. Conecte-se à internet e espere aparecer “Salvo” antes de
+            sair. Se sair agora, eles continuam guardados aqui e são enviados quando você entrar de novo neste aparelho.
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel>Ficar</AlertDialogCancel>
+          <AlertDialogAction onClick={() => void signOut()}>Sair mesmo assim</AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+    </>
   )
 }
 
@@ -59,6 +99,7 @@ export function AppLayout() {
   const { profile } = useAuth()
   const clinic = useClinic()
   const items = profile ? navFor(profile.role) : []
+  useOfflinePrefetch()
 
   return (
     <div className="min-h-dvh md:flex">
@@ -87,6 +128,7 @@ export function AppLayout() {
           ))}
         </nav>
         <div className="border-t border-sidebar-border p-3">
+          <SyncIndicator compact className="mb-2" />
           <UserMenu />
         </div>
       </aside>
@@ -95,10 +137,14 @@ export function AppLayout() {
         {/* Topo (celular) */}
         <header className="sticky top-0 z-20 flex items-center justify-between border-b bg-card/95 px-4 py-2 backdrop-blur md:hidden">
           <Logo />
-          <UserMenu compact />
+          <div className="flex items-center gap-2">
+            <SyncIndicator compact />
+            <UserMenu compact />
+          </div>
         </header>
 
         <main className="mx-auto w-full max-w-6xl flex-1 px-4 pt-6 pb-28 md:px-8 md:pt-10 md:pb-10">
+          <OpenSessionBanner />
           <Outlet />
         </main>
       </div>

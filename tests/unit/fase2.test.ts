@@ -28,3 +28,42 @@ describe('mensagens de erro', () => {
   it('mensagem do banco em português', () => expect(friendlyError({ code: '23514', message: 'Informe o nome completo.' })).toBe('Informe o nome completo.'))
   it('erro técnico desconhecido vira mensagem simples', () => expect(friendlyError({ code: 'XX000', message: 'internal' })).toMatch(/Tente de novo/))
 })
+
+// ---- Fase 4: contas da coleta ------------------------------------------------
+import { formatClock, formatDuration, pctLabel, targetStats } from '@/features/collection/stats'
+import type { LocalTrial } from '@/offline/db'
+
+const tr = (result: LocalTrial['result'], i: number, extra: Partial<LocalTrial> = {}): LocalTrial => ({
+  id: `t${i}`,
+  session_id: 's',
+  user_id: 'u',
+  clinic_id: 'c',
+  learner_id: 'l',
+  program_id: 'p',
+  target_id: 'a',
+  result,
+  prompt_level_id: null,
+  help_level_id: null,
+  value: null,
+  started_at: null,
+  recorded_at: `2026-11-13T10:00:0${i}Z`,
+  deleted_at: null,
+  ...extra,
+})
+
+describe('contas da coleta', () => {
+  const trials = [tr('acerto', 1), tr('acerto', 2), tr('dica', 3), tr('erro', 4), tr('acerto', 5), tr('erro', 6, { deleted_at: 'x' })]
+  const st = targetStats(trials)
+  it('desfeito não conta', () => expect(st.total).toBe(5))
+  it('% independente = + ÷ total', () => expect(st.pctIndependent).toBe(60))
+  it('% total = (+ e DICA) ÷ total', () => expect(st.pctTotal).toBe(80))
+  it('sequência na ordem dos toques', () => expect(st.sequence.join(' ')).toBe('+ + D − +'))
+  it('mostra o número de tentativas junto da %', () => expect(pctLabel(st)).toBe('60% (3/5)'))
+  it('frequência e duração', () => {
+    const s2 = targetStats([tr(null, 1, { value: 1 }), tr(null, 2, { value: 1 }), tr(null, 3, { value: 65 })])
+    expect(s2.occurrences).toBe(3)
+    expect(s2.seconds).toBe(67)
+  })
+  it('formata duração', () => expect(formatDuration(65)).toBe('1min 05s'))
+  it('formata cronômetro', () => expect(formatClock(3729)).toBe('1:02:09'))
+})

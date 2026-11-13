@@ -31,3 +31,6 @@ dist-ssr
 # Supabase CLI
 supabase/.temp
 supabase/.branches
+
+# capturas de tela de testes que falharam
+tests/e2e/*.png
